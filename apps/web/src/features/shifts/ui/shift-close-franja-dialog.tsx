@@ -11,6 +11,7 @@ import {
 } from "@/features/shifts/lib/shift-close-trip-picker";
 import { isMultiPlatform, shiftPlatformDisplayName } from "@/features/shifts/lib/shift-platform";
 import type { CerrarTurnosRow } from "@/features/shifts/ui/cerrar-turnos-types";
+import { useTranslations } from "@/shared/i18n/i18n-provider";
 import { RidePlatform } from "@prisma/client";
 
 function toDatetimeLocalValue(d: Date): string {
@@ -44,6 +45,7 @@ export function ShiftCloseFranjaDialog({
   onContinue,
   onCancel,
 }: Props) {
+  const { t } = useTranslations();
   const defaultFrom = row.periodFromIso ? new Date(row.periodFromIso) : new Date();
   const defaultTo = row.periodToIso ? new Date(row.periodToIso) : new Date();
   const spansMultipleDays =
@@ -389,7 +391,7 @@ export function ShiftCloseFranjaDialog({
             disabled={!canContinue}
             onClick={handleContinue}
           >
-            {loading ? "Calculando…" : "Ver liquidación"}
+            {loading ? t("turnos.calculating") : t("turnos.detail.closeShift")}
           </button>
         </div>
       </div>

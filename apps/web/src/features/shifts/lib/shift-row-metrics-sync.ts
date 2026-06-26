@@ -3,6 +3,7 @@ import type { CerrarTurnosRow, PlatformShiftMetrics } from "@/features/shifts/ui
 function rowMetricsMatch(row: CerrarTurnosRow, cols: {
   viajes: number;
   total: string;
+  taximetro: string;
   t3: string;
   app: string;
   efectivo: string;
@@ -15,6 +16,7 @@ function rowMetricsMatch(row: CerrarTurnosRow, cols: {
   return (
     row.viajes === cols.viajes &&
     row.total === cols.total &&
+    row.taximetro === cols.taximetro &&
     row.t3 === cols.t3 &&
     row.app === cols.app &&
     row.efectivo === cols.efectivo &&
@@ -34,6 +36,7 @@ export function mergeRowWithDetailMetrics(
   const cols = {
     viajes: metrics.viajes,
     total: metrics.total,
+    taximetro: metrics.taximetro,
     t3: metrics.t3,
     app: metrics.app,
     efectivo: metrics.efectivo,

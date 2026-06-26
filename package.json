@@ -4,6 +4,8 @@
   "workspaces": ["apps/*", "packages/*"],
   "scripts": {
     "worker": "npm run fleet -w @fleethub/worker",
+    "worker:check": "bash scripts/check-fleethub-duplicates.sh",
+    "worker:debug": "bash scripts/worker-debug.sh",
     "start:server": "npm run start -w @fleethub/server",
     "start:web": "npm run start -w @fleethub/web",
     "build": "npm run build -w @fleethub/web && npm run build -w @fleethub/server"

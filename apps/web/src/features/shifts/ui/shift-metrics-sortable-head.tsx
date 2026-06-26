@@ -10,6 +10,7 @@ export type ShiftSortKey =
   | "conductor"
   | "viajes"
   | "total"
+  | "taximetro"
   | "t3"
   | "app"
   | "efectivo"
@@ -24,6 +25,8 @@ const SHIFT_SORT_COMPARATORS = {
     compareStrings(a.conductor, b.conductor, d),
   viajes: (a, b, d) => compareNumbers(a.viajes, b.viajes, d),
   total: (a, b, d) => compareNumbers(parseEuroCell(a.total), parseEuroCell(b.total), d),
+  taximetro: (a, b, d) =>
+    compareNumbers(parseEuroCell(a.taximetro), parseEuroCell(b.taximetro), d),
   t3: (a, b, d) => compareNumbers(parseEuroCell(a.t3), parseEuroCell(b.t3), d),
   app: (a, b, d) => compareNumbers(parseEuroCell(a.app), parseEuroCell(b.app), d),
   efectivo: (a, b, d) =>
@@ -86,6 +89,13 @@ export function ShiftMetricsSortableHead({
         className="whitespace-nowrap tabular-nums"
         activeDir={dirFor("total")}
         onSort={() => toggle("total")}
+      />
+      <VuiSortableTh
+        label={t("turnos.columns.taximetro")}
+        align="right"
+        className="whitespace-nowrap tabular-nums"
+        activeDir={dirFor("taximetro")}
+        onSort={() => toggle("taximetro")}
       />
       <VuiSortableTh
         label={t("turnos.columns.t3")}

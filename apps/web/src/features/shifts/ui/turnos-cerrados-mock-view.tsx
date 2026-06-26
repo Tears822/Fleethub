@@ -41,6 +41,7 @@ import {
   ShiftMetricsSortableHead,
   useShiftTableSort,
 } from "@/features/shifts/ui/shift-metrics-sortable-head";
+import { displayTaximetro } from "@/features/shifts/ui/shift-metrics-cells";
 
 function shiftRowDomId(key: string): string {
   return `shift-${encodeURIComponent(key)}`;
@@ -400,7 +401,7 @@ export function TurnosCerradosMockView({
             <tbody>
               {filteredRows.length === 0 ? (
                 <tr className="vui-table-row">
-                  <td colSpan={12} className="py-8 text-center text-sm text-zinc-500">
+                  <td colSpan={13} className="py-8 text-center text-sm text-zinc-500">
                     {rows.length === 0
                       ? t("turnos.noClosed")
                       : t("turnos.noClosedFilterMatch")}
@@ -427,6 +428,7 @@ export function TurnosCerradosMockView({
                       </td>
                       <td className="text-right tabular-nums">{r.viajes}</td>
                       <td className="text-right font-semibold text-zinc-900">{r.total}</td>
+                      <td className="text-right tabular-nums">{displayTaximetro(r)}</td>
                       <td className="text-right tabular-nums">{r.t3}</td>
                       <td className="text-right tabular-nums">{r.app}</td>
                       <td className="text-right tabular-nums">{r.efectivo}</td>
@@ -451,7 +453,7 @@ export function TurnosCerradosMockView({
                     </tr>
                     {isExpanded ? (
                       <tr className="vui-table-row">
-                        <td colSpan={12} className="p-0">
+                        <td colSpan={13} className="p-0">
                           <ShiftRowDetailPanel
                             row={r}
                             variant="cerrado"

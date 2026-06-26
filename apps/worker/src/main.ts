@@ -1,4 +1,5 @@
 import "./load-env.js";
+import { open, readFile, unlink, type FileHandle } from "node:fs/promises";
 import { createRedisConnection } from "./config/redis";
 import { getRedisUrl } from "./config/env";
 import { logIntegrationEnvSummary } from "./config/integration-env";
@@ -19,13 +20,71 @@ import {
   WEBHOOK_INGEST_QUEUE_NAME,
 } from "./queues/constants";
 
+const DEFAULT_FLEET_WORKER_LOCK_FILE = "/tmp/fleethub-worker-fleet.lock";
+
+async function readProcessCommand(pid: number): Promise<string | null> {
+  try {
+    const command = await readFile(`/proc/${pid}/cmdline`, "utf8");
+    return command.replace(/\0/g, " ").trim();
+  } catch {
+    return null;
+  }
+}
+
+async function isFleetWorkerProcess(pid: number): Promise<boolean> {
+  if (!Number.isInteger(pid) || pid <= 0 || pid === process.pid) return false;
+  try {
+    process.kill(pid, 0);
+  } catch {
+    return false;
+  }
+
+  const command = await readProcessCommand(pid);
+  // Linux /proc is available in production. If it is not readable, treat the pid
+  // as active rather than risk running two queue consumers.
+  if (!command) return true;
+  return command.includes("src/main.ts") && command.includes("fleethub");
+}
+
+async function acquireFleetWorkerLock(): Promise<() => Promise<void>> {
+  const lockFile = process.env.FLEETHUB_WORKER_LOCK_FILE?.trim() || DEFAULT_FLEET_WORKER_LOCK_FILE;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    let handle: FileHandle | null = null;
+    try {
+      handle = await open(lockFile, "wx", 0o600);
+      await handle.writeFile(`${process.pid}\n${process.cwd()}\n${new Date().toISOString()}\n`);
+      console.log(`[worker] Fleet worker lock acquired: ${lockFile} (pid ${process.pid})`);
+      return async () => {
+        await handle?.close().catch(() => undefined);
+        await unlink(lockFile).catch(() => undefined);
+      };
+    } catch (e) {
+      await handle?.close().catch(() => undefined);
+      if (!(e instanceof Error) || !("code" in e) || e.code !== "EEXIST") throw e;
+
+      const existing = await readFile(lockFile, "utf8").catch(() => "");
+      const ownerPid = Number.parseInt(existing.split(/\s+/)[0] ?? "", 10);
+      if (await isFleetWorkerProcess(ownerPid)) {
+        throw new Error(
+          `Another FleetHub fleet worker is already running (pid ${ownerPid}, lock ${lockFile}). Stop it before starting a second worker.`,
+        );
+      }
+
+      console.warn(`[worker] Removing stale fleet worker lock: ${lockFile}`);
+      await unlink(lockFile).catch(() => undefined);
+    }
+  }
+
+  throw new Error(`Could not acquire FleetHub fleet worker lock after clearing stale lock.`);
+}
+
 async function main() {
   const mode = (process.env.WORKER_MODE ?? "smoke").trim().toLowerCase();
   console.log("[worker] FleetHub worker — Redis:", getRedisUrl());
 
-  const connection = createRedisConnection();
-
   if (mode === "smoke") {
+    const connection = createRedisConnection();
     try {
       logIntegrationEnvSummary();
       await runQueueSmokeCheck(connection);
@@ -36,12 +95,15 @@ async function main() {
     return;
   }
 
+  let releaseFleetWorkerLock: (() => Promise<void>) | null = null;
   if (mode !== "fleet") {
     console.error(`[worker] Unknown WORKER_MODE="${mode}". Use smoke or fleet.`);
-    await connection.quit();
     process.exit(1);
     return;
   }
+
+  releaseFleetWorkerLock = await acquireFleetWorkerLock();
+  const connection = createRedisConnection();
 
   logIntegrationEnvSummary();
   scheduleAuditLogRetention();
@@ -80,6 +142,7 @@ async function main() {
         await webhookWorker.close();
         await exportWorker.close();
         await connection.quit();
+        await releaseFleetWorkerLock?.();
         resolve();
       } catch (e) {
         reject(e);

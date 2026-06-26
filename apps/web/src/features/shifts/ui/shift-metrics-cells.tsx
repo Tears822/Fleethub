@@ -1,12 +1,30 @@
 import type { PlatformShiftMetrics } from "@/features/shifts/ui/cerrar-turnos-types";
 import type { ReactNode } from "react";
+import { parseEuroCell } from "@/features/billing/lib/facturacion-mock-format";
 
 const METRIC_CELL =
   "whitespace-nowrap tabular-nums text-right text-zinc-800 [&:has(button)]:text-left [&:has(select)]:text-left";
 
+function formatEuroDisplay(value: number): string {
+  return new Intl.NumberFormat("es-ES", {
+    style: "currency",
+    currency: "EUR",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+export function displayTaximetro(
+  metrics: Pick<PlatformShiftMetrics, "taximetro" | "total" | "t3">,
+): string {
+  if (metrics.taximetro) return metrics.taximetro;
+  return formatEuroDisplay(Math.max(0, parseEuroCell(metrics.total) - parseEuroCell(metrics.t3)));
+}
+
 export const SHIFT_METRIC_LABELS = {
   viajes: "Viajes",
   total: "Importe total",
+  taximetro: "Taxímetro",
   t3: "Tarifa 3",
   app: "Pago app",
   efectivo: "Efectivo",
@@ -35,6 +53,7 @@ export function ShiftMetricsCells({
     <>
       <td className={td}>{metrics.viajes}</td>
       <td className={`${td} font-semibold text-emerald-700`}>{metrics.total}</td>
+      <td className={td}>{displayTaximetro(metrics)}</td>
       <td className={td}>{metrics.t3}</td>
       <td className={td}>{metrics.app}</td>
       <td className={td}>{metrics.efectivo}</td>
@@ -69,6 +88,7 @@ export function ShiftMetricsSummaryStrip({
   const items: SummaryItem[] = [
     { label: SHIFT_METRIC_LABELS.viajes, value: metrics.viajes },
     { label: SHIFT_METRIC_LABELS.total, value: metrics.total, emphasis: true },
+    { label: SHIFT_METRIC_LABELS.taximetro, value: displayTaximetro(metrics) },
     { label: SHIFT_METRIC_LABELS.t3, value: metrics.t3 },
     { label: SHIFT_METRIC_LABELS.app, value: metrics.app },
     { label: SHIFT_METRIC_LABELS.efectivo, value: metrics.efectivo },

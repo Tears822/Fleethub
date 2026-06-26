@@ -23,6 +23,7 @@ const BREAKDOWN_HEADERS = [
   "",
   "Viajes",
   "Importe total",
+  "Taxímetro",
   "Tarifa 3",
   "Pago app",
   "Efectivo",
@@ -59,7 +60,7 @@ export function ShiftPlatformBreakdown({
 }: ShiftPlatformBreakdownProps) {
   return (
     <tr className="vui-table-row">
-      <td colSpan={13} className="!border-t-0 bg-zinc-50/90 p-0">
+      <td colSpan={14} className="!border-t-0 bg-zinc-50/90 p-0">
         <div
           className="mx-2 mb-2 border-l-[3px] border-orange-500 bg-gradient-to-b from-orange-50/60 to-zinc-50/90 py-3 pl-3 pr-2 md:mx-3 md:pl-4"
           role="region"
@@ -76,7 +77,7 @@ export function ShiftPlatformBreakdown({
 
           <div className="overflow-x-auto rounded-lg border border-zinc-200 bg-white shadow-sm ring-1 ring-zinc-100/80">
             <table className="w-full min-w-[1050px] text-left text-sm">
-              <thead>
+              <thead className="vui-table-sticky-head">
                 <tr className="border-b border-zinc-200 bg-zinc-50/90 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
                   {BREAKDOWN_HEADERS.map((label, i) => (
                     <th
@@ -84,8 +85,8 @@ export function ShiftPlatformBreakdown({
                       className={[
                         "whitespace-nowrap px-2 py-2 font-semibold",
                         i === 1 ? "w-0 p-0" : "",
-                        i >= 2 && i <= 11 ? "text-right" : "",
-                        i === 12 ? "text-right" : "",
+                        i >= 2 && i <= 12 ? "text-right" : "",
+                        i === 13 ? "text-right" : "",
                       ]
                         .filter(Boolean)
                         .join(" ")}
@@ -152,7 +153,7 @@ export function ShiftPlatformBreakdown({
                       </tr>
                       {tripExpanded ? (
                         <tr>
-                          <td colSpan={13} className="border-t border-zinc-100 bg-zinc-50/50 p-0">
+                          <td colSpan={14} className="border-t border-zinc-100 bg-zinc-50/50 p-0">
                             <ShiftPlatformTripDetailPanel
                               row={row}
                               platform={platformMetrics.platform}

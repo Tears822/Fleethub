@@ -13,6 +13,7 @@ import {
   ShiftMetricsSortableHead,
   useShiftTableSort,
 } from "@/features/shifts/ui/shift-metrics-sortable-head";
+import { displayTaximetro } from "@/features/shifts/ui/shift-metrics-cells";
 
 function turnosCerradosHref(row: ClosedShiftRow): string {
   const params = new URLSearchParams({ shift: shiftRowKey(row) });
@@ -79,6 +80,11 @@ export function DriverTurnosCerradosTab({ rows }: { rows: ClosedShiftRow[] }) {
                   <td className="text-right font-semibold text-zinc-900">
                     <Link href={href} className="block py-1">
                       {r.total}
+                    </Link>
+                  </td>
+                  <td className="text-right tabular-nums">
+                    <Link href={href} className="block py-1">
+                      {displayTaximetro(r)}
                     </Link>
                   </td>
                   <td className="text-right tabular-nums">

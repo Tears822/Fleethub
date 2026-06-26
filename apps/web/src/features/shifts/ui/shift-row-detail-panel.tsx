@@ -57,6 +57,12 @@ const GROUP_CELL_SERVICIO_R = "bg-sky-50 border-r border-sky-200";
 const GROUP_CELL_PAGO_L = "bg-amber-50 border-l border-amber-200";
 const GROUP_CELL_PAGO_M = "bg-amber-50";
 const GROUP_CELL_PAGO_R = "bg-amber-50 border-r border-amber-200";
+const TOTAL_ROW_CELL = "bg-zinc-100";
+
+/** En fila de totales, fondo gris uniforme; en viajes, tinte del grupo SERVICIO/PAGO. */
+function groupCellClass(groupTint: string, isTotal: boolean): string {
+  return isTotal ? TOTAL_ROW_CELL : groupTint;
+}
 
 function tripDetailHeaders(t: Translator): string[] {
   return [
@@ -98,6 +104,7 @@ export function blockTotalToMetrics(block: PlatformBlock): PlatformShiftMetrics 
     platform: block.platform,
     viajes: block.viajes,
     total: t.importe,
+    taximetro: t.taximetro,
     t3: t.t3,
     app: t.app,
     efectivo: t.efectivo,
@@ -219,16 +226,16 @@ const TripPaymentTableRowReadOnly = memo(function TripPaymentTableRowReadOnly({
           <span className="ml-1 text-[10px] font-normal text-red-700">{t("turnos.detail.paymentUnbalanced")}</span>
         ) : null}
       </td>
-      <td className={`px-2 py-2 tabular-nums text-right ${GROUP_CELL_SERVICIO_L}`}>{line.importe}</td>
-      <td className={`px-2 py-2 tabular-nums text-right ${GROUP_CELL_SERVICIO_M}`}>{line.taximetro}</td>
-      <td className={`px-2 py-2 tabular-nums text-right ${GROUP_CELL_SERVICIO_R}`}>{line.t3}</td>
-      <td className={`px-2 py-2 tabular-nums text-right ${GROUP_CELL_PAGO_L}`}>{line.app}</td>
+      <td className={`px-2 py-2 tabular-nums text-right ${groupCellClass(GROUP_CELL_SERVICIO_L, isTotal)}`}>{line.importe}</td>
+      <td className={`px-2 py-2 tabular-nums text-right ${groupCellClass(GROUP_CELL_SERVICIO_M, isTotal)}`}>{line.taximetro}</td>
+      <td className={`px-2 py-2 tabular-nums text-right ${groupCellClass(GROUP_CELL_SERVICIO_R, isTotal)}`}>{line.t3}</td>
+      <td className={`px-2 py-2 tabular-nums text-right ${groupCellClass(GROUP_CELL_PAGO_L, isTotal)}`}>{line.app}</td>
       <td
-        className={`px-2 py-2 tabular-nums text-right ${GROUP_CELL_PAGO_M} ${!isTotal && line.efectivo !== "0,00 €" && line.efectivo !== "—" ? "text-red-600" : ""}`}
+        className={`px-2 py-2 tabular-nums text-right ${groupCellClass(GROUP_CELL_PAGO_M, isTotal)} ${!isTotal && line.efectivo !== "0,00 €" && line.efectivo !== "—" ? "text-red-600" : ""}`}
       >
         {line.efectivo}
       </td>
-      <td className={`px-2 py-2 tabular-nums text-right ${GROUP_CELL_PAGO_R}`}>{line.tarjeta}</td>
+      <td className={`px-2 py-2 tabular-nums text-right ${groupCellClass(GROUP_CELL_PAGO_R, isTotal)}`}>{line.tarjeta}</td>
       <td
         className={`px-2 py-2 tabular-nums text-right ${line.comision.startsWith("-") ? "text-red-600" : ""}`}
       >
@@ -410,6 +417,7 @@ function platformBlockMetricsFingerprint(block: PlatformBlock): string {
     block.trips.length,
     m.viajes,
     m.total,
+    m.taximetro,
     m.t3,
     m.app,
     m.efectivo,
@@ -561,8 +569,9 @@ function TripDetailTable({
           </div>
         </div>
       ) : null}
+      <div className="vui-table-scroll-y">
       <table className="w-full min-w-[900px] border-collapse text-left text-[11px]">
-        <thead>
+        <thead className="vui-table-sticky-head">
           <tr className="text-[10px] font-bold uppercase tracking-wide">
             <th className="px-2 py-1.5" colSpan={3} aria-hidden />
             <th
@@ -595,6 +604,7 @@ function TripDetailTable({
           {renderRow(block.total, true)}
         </tbody>
       </table>
+      </div>
     </div>
   );
 

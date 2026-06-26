@@ -167,6 +167,24 @@
     @apply whitespace-nowrap px-3 py-1.5 first:pl-4;
   }
 
+  /* Sticky table headers (Excel-style freeze) while scrolling */
+  .vui-table-sticky-head th {
+    @apply sticky z-20;
+  }
+
+  .vui-table-sticky-head tr:first-child th {
+    @apply top-0;
+  }
+
+  .vui-table-sticky-head tr:nth-child(2) th {
+    @apply top-[1.625rem] shadow-[0_1px_0_0_rgb(228_228_231)];
+  }
+
+  .vui-table-scroll-y {
+    max-height: min(70vh, 42rem);
+    @apply overflow-y-auto overflow-x-auto;
+  }
+
   .vui-table-row,
   .erp-table-row,
   .sa-table-row {

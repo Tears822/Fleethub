@@ -36,8 +36,6 @@ import { appsPlatformDisplayName } from "@/features/apps/lib/apps-platform";
 import { ShiftPlatformDots } from "@/shared/ui/shift-platform-dots";
 import { RidePlatform } from "@prisma/client";
 import type { LiquidationPreviewDto } from "@/features/shifts/lib/format-liquidation";
-import { downloadLiquidationPdf } from "@/features/shifts/lib/download-liquidation-pdf";
-import { ShiftCloseConfirmDialog } from "@/features/shifts/ui/shift-close-confirm-dialog";
 import {
   ShiftMetricsSortableHead,
   useShiftTableSort,
@@ -91,6 +89,18 @@ function closePlatformForRow(row: CerrarTurnosRow): RidePlatform | undefined {
   return RidePlatform.UBER;
 }
 
+/** Franja horaria / plataforma solo cuando el turno no se puede cerrar de un clic. */
+function needsFranjaDialog(row: CerrarTurnosRow, initialPlatform?: RidePlatform): boolean {
+  const defaultFrom = row.periodFromIso ? new Date(row.periodFromIso) : new Date();
+  const defaultTo = row.periodToIso ? new Date(row.periodToIso) : new Date();
+  const spansMultipleDays =
+    defaultFrom.toDateString() !== defaultTo.toDateString() ||
+    defaultTo.getTime() - defaultFrom.getTime() > 20 * 60 * 60 * 1000;
+  if (spansMultipleDays || (row.avisos ?? 0) > 0) return true;
+  if (isMultiPlatform(row.plataformas) && !initialPlatform) return true;
+  return false;
+}
+
 export function CerrarTurnosMockView({
   initialDbRows = [],
   canExportExcel = false,
@@ -117,15 +127,9 @@ export function CerrarTurnosMockView({
     window.setTimeout(() => setListRefreshing(false), 600);
   }, [router]);
   const [closingDriverId, setClosingDriverId] = useState<string | null>(null);
-  const [pdfLoading, setPdfLoading] = useState(false);
   const [closeFranja, setCloseFranja] = useState<{
     row: CerrarTurnosRow;
     initialPlatform?: RidePlatform;
-  } | null>(null);
-  const [closePreview, setClosePreview] = useState<{
-    row: CerrarTurnosRow;
-    preview: LiquidationPreviewDto;
-    closeOptions: ShiftCloseFranjaOptions;
   } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [platformFilter, setPlatformFilter] = useState<ShiftPlatformFilter>("all");
@@ -146,34 +150,22 @@ export function CerrarTurnosMockView({
   useEffect(() => {
     if (!usingLiveData) return;
     const detailOpen = expandedDriverKey !== null || expandedTripDetailKey !== null;
-    const closeDialogOpen = closeFranja !== null || closePreview !== null;
+    const closeDialogOpen = closeFranja !== null;
     if (detailOpen || closeDialogOpen) return;
     const timer = window.setInterval(() => router.refresh(), 90_000);
     return () => window.clearInterval(timer);
-  }, [router, usingLiveData, expandedDriverKey, expandedTripDetailKey, closeFranja, closePreview]);
+  }, [router, usingLiveData, expandedDriverKey, expandedTripDetailKey, closeFranja]);
 
   const platformFilterOptions = useMemo(
     () => collectPlatformFiltersFromRows(rows),
     [rows],
   );
 
-  const requestCloseShift = useCallback(
-    (row: CerrarTurnosRow, initialPlatform?: RidePlatform) => {
-      if (!row.driverId || !row.tripIds?.length) {
-        toast.error(t("turnos.noTripsToClose"));
-        return;
-      }
-      setExpandedDriverKey(null);
-      setExpandedTripDetailKey(null);
-      setCloseFranja({ row, initialPlatform });
-    },
-    [t, toast],
-  );
-
-  const loadClosePreview = useCallback(
+  const executeCloseShift = useCallback(
     async (row: CerrarTurnosRow, options: ShiftCloseFranjaOptions) => {
       if (!row.driverId) return;
       setClosingDriverId(row.driverId);
+      setCloseFranja(null);
       try {
         const body: Record<string, string> = { driverId: row.driverId };
         if (options.platform) body.platform = options.platform;
@@ -181,37 +173,29 @@ export function CerrarTurnosMockView({
           body.timeFrom = options.timeFrom;
           body.timeTo = options.timeTo;
         }
-        const res = await fetch(buildApiUrl("/api/tenant/shifts/liquidation-preview"), {
+        const previewRes = await fetch(buildApiUrl("/api/tenant/shifts/liquidation-preview"), {
           method: "POST",
           credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
         });
-        const data = (await res.json()) as LiquidationPreviewDto & { error?: string };
-        if (!res.ok) {
-          toast.error(data.error ?? t("turnos.settlementError"));
+        const preview = (await previewRes.json()) as LiquidationPreviewDto & { error?: string };
+        if (!previewRes.ok) {
+          toast.error(preview.error ?? t("turnos.settlementError"));
           return;
         }
-        setCloseFranja(null);
-        setClosePreview({ row, preview: data, closeOptions: options });
-      } catch {
-        toast.error(t("turnos.connectionErrorPrepare"));
-      } finally {
-        setClosingDriverId(null);
-      }
-    },
-    [t, toast],
-  );
+        if (preview.unvalidatedCount > 0) {
+          toast.error(t("turnos.closeDialog.unvalidated", { count: preview.unvalidatedCount }));
+          return;
+        }
+        if ((preview.unbalancedPaymentCount ?? 0) > 0) {
+          toast.error(
+            t("turnos.closeDialog.unbalanced", { count: preview.unbalancedPaymentCount ?? 0 }),
+          );
+          return;
+        }
 
-  const confirmCloseShift = useCallback(
-    async (note: string) => {
-      if (!closePreview?.row.driverId) return;
-      const row = closePreview.row;
-      if (!row.driverId) return;
-      setClosingDriverId(row.driverId);
-      const tripIds = closePreview.preview.tripIds;
-      const opts = closePreview.closeOptions;
-      try {
+        const tripIds = preview.tripIds;
         const res = await fetch(buildApiUrl("/api/tenant/shifts/close"), {
           method: "POST",
           credentials: "include",
@@ -219,10 +203,9 @@ export function CerrarTurnosMockView({
           body: JSON.stringify({
             driverId: row.driverId,
             tripIds,
-            note: note || undefined,
-            platform: opts.platform,
-            timeFrom: opts.useTimeRange ? opts.timeFrom : undefined,
-            timeTo: opts.useTimeRange ? opts.timeTo : undefined,
+            platform: options.platform,
+            timeFrom: options.useTimeRange ? options.timeFrom : undefined,
+            timeTo: options.useTimeRange ? options.timeTo : undefined,
           }),
         });
         const data = (await res.json()) as {
@@ -241,10 +224,10 @@ export function CerrarTurnosMockView({
             : t("turnos.closeSuccessMany", { count: data.closedCount ?? 0 }),
         );
         const closedTripIds = data.tripIds ?? tripIds;
-        const closedDriverId = data.driverId ?? row.driverId;
         const partialClose =
-          opts.useTimeRange || Boolean(opts.platform) || closedTripIds.length < (row.tripIds?.length ?? 0);
-        setClosePreview(null);
+          options.useTimeRange ||
+          Boolean(options.platform) ||
+          closedTripIds.length < (row.tripIds?.length ?? 0);
         if (!partialClose) {
           setRows((current) => current.filter((r) => r.driverId !== row.driverId));
         }
@@ -255,7 +238,28 @@ export function CerrarTurnosMockView({
         setClosingDriverId(null);
       }
     },
-    [closePreview, router, t, toast],
+    [router, t, toast],
+  );
+
+  const requestCloseShift = useCallback(
+    (row: CerrarTurnosRow, initialPlatform?: RidePlatform) => {
+      if (!row.driverId || !row.tripIds?.length) {
+        toast.error(t("turnos.noTripsToClose"));
+        return;
+      }
+      setExpandedDriverKey(null);
+      setExpandedTripDetailKey(null);
+      const options: ShiftCloseFranjaOptions = {
+        useTimeRange: false,
+        platform: initialPlatform ?? closePlatformForRow(row),
+      };
+      if (needsFranjaDialog(row, initialPlatform)) {
+        setCloseFranja({ row, initialPlatform });
+        return;
+      }
+      void executeCloseShift(row, options);
+    },
+    [executeCloseShift, t, toast],
   );
 
   const handlePaymentsValidated = useCallback(() => {
@@ -272,26 +276,6 @@ export function CerrarTurnosMockView({
       );
     },
     [],
-  );
-
-  const handleDownloadPreviewPdf = useCallback(
-    async (note: string) => {
-      if (!closePreview?.row.driverId || !closePreview.preview.tripIds.length) return;
-      setPdfLoading(true);
-      try {
-        await downloadLiquidationPdf({
-          driverId: closePreview.row.driverId,
-          tripIds: closePreview.preview.tripIds,
-          note: note || undefined,
-        });
-        toast.success(t("turnos.pdfDownloaded"));
-      } catch (e) {
-        toast.error(e instanceof Error ? e.message : t("turnos.pdfError"));
-      } finally {
-        setPdfLoading(false);
-      }
-    },
-    [closePreview, t, toast],
   );
 
   const filteredRows = useMemo(() => {
@@ -493,9 +477,9 @@ export function CerrarTurnosMockView({
           ) : null}
         </div>
 
-        <VuiTableShell className="overflow-x-auto">
-          <table className="w-full min-w-[1100px] text-left text-sm">
-            <thead className="vui-table-head">
+        <VuiTableShell className="overflow-x-auto overflow-y-visible">
+          <table className="w-full min-w-[1180px] text-left text-sm">
+            <thead className="vui-table-head vui-table-sticky-head">
               <ShiftMetricsSortableHead
                 dirFor={dirFor}
                 toggle={toggleSort}
@@ -505,7 +489,7 @@ export function CerrarTurnosMockView({
             <tbody>
               {filteredRows.length === 0 ? (
                 <tr className="vui-table-row">
-                  <td colSpan={13} className="py-8 text-center text-sm text-zinc-500">
+                  <td colSpan={14} className="py-8 text-center text-sm text-zinc-500">
                     {rows.length === 0 ? t("turnos.noPending") : t("turnos.noFilterMatch")}
                   </td>
                 </tr>
@@ -519,6 +503,7 @@ export function CerrarTurnosMockView({
                   platform: "Uber",
                   viajes: r.viajes,
                   total: r.total,
+                  taximetro: r.taximetro,
                   t3: r.t3,
                   app: r.app,
                   efectivo: r.efectivo,
@@ -614,7 +599,7 @@ export function CerrarTurnosMockView({
 
                     {rowExpanded && isMulti ? (
                       <tr className="vui-table-row">
-                        <td colSpan={13} className="!p-0">
+                        <td colSpan={14} className="!p-0">
                           <ShiftMetricsSummaryStrip metrics={totalMetrics} showAvisos />
                         </td>
                       </tr>
@@ -643,7 +628,7 @@ export function CerrarTurnosMockView({
 
                     {!isMulti && singleTripExpanded ? (
                       <tr className="vui-table-row">
-                        <td colSpan={13} className="p-0">
+                        <td colSpan={14} className="p-0">
                           <ShiftPlatformTripDetailPanel
                             row={r}
                             platform={singlePlatformName(r)}
@@ -673,21 +658,8 @@ export function CerrarTurnosMockView({
           row={closeFranja.row}
           initialPlatform={closeFranja.initialPlatform}
           loading={closingDriverId === closeFranja.row.driverId}
-          onContinue={(options) => void loadClosePreview(closeFranja.row, options)}
+          onContinue={(options) => void executeCloseShift(closeFranja.row, options)}
           onCancel={() => setCloseFranja(null)}
-        />
-      ) : null}
-
-      {closePreview ? (
-        <ShiftCloseConfirmDialog
-          preview={closePreview.preview}
-          driverId={closePreview.row.driverId ?? ""}
-          tripIds={closePreview.preview.tripIds}
-          loading={closingDriverId === closePreview.row.driverId}
-          pdfLoading={pdfLoading}
-          onDownloadPdf={(note) => void handleDownloadPreviewPdf(note)}
-          onConfirm={(note) => void confirmCloseShift(note)}
-          onCancel={() => setClosePreview(null)}
         />
       ) : null}
     </div>

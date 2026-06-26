@@ -171,17 +171,27 @@ do_logs() {
   journalctl -u fleethub-api -u fleethub-web -u fleethub-worker -f
 }
 
+do_check_duplicates() {
+  bash "$ROOT/scripts/check-fleethub-duplicates.sh"
+}
+
+do_worker_debug() {
+  bash "$ROOT/scripts/worker-debug.sh"
+}
+
 usage() {
   cat <<EOF
 FleetHub production helper (systemd — keeps running after SSH exit)
 
-  ./scripts/production.sh install   Install units, build, enable on boot, start
-  ./scripts/production.sh build     npm ci + npm run build
-  ./scripts/production.sh start     Start services
-  ./scripts/production.sh stop      Stop services
-  ./scripts/production.sh restart   Restart services
-  ./scripts/production.sh status    Status + health checks
-  ./scripts/production.sh logs      Follow API + web logs
+  ./scripts/production.sh install           Install units, build, enable on boot, start
+  ./scripts/production.sh build             npm ci + npm run build
+  ./scripts/production.sh start             Start services
+  ./scripts/production.sh stop              Stop services
+  ./scripts/production.sh restart           Restart services
+  ./scripts/production.sh status            Status + health checks
+  ./scripts/production.sh logs              Follow API + web logs
+  ./scripts/production.sh check-duplicates    Detect API/Web/Worker outside systemd
+  ./scripts/production.sh worker-debug      Stop systemd worker, run manual worker, restore on exit
 
 Before install:
   1. cp .env.example .env  &&  edit secrets / DATABASE_URL
@@ -201,6 +211,8 @@ case "$cmd" in
   restart) do_restart ;;
   status) do_status ;;
   logs) do_logs ;;
+  check-duplicates) do_check_duplicates ;;
+  worker-debug) do_worker_debug ;;
   -h|--help|help|"") usage ;;
   *) die "Unknown command: $cmd. Run: ./scripts/production.sh help" ;;
 esac

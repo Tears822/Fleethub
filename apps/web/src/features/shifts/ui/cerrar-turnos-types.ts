@@ -11,6 +11,7 @@ export type PlatformShiftMetrics = {
   platform: ShiftPlatformName;
   viajes: number;
   total: string;
+  taximetro: string;
   t3: string;
   app: string;
   efectivo: string;
@@ -27,6 +28,7 @@ export type ShiftTableRow = {
   rango: string;
   viajes: number;
   total: string;
+  taximetro: string;
   t3: string;
   app: string;
   efectivo: string;
