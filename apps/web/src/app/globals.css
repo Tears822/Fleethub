@@ -169,7 +169,11 @@
 
   /* Sticky table headers (Excel-style freeze) while scrolling */
   .vui-table-sticky-head th {
-    @apply sticky z-20;
+    @apply sticky z-20 bg-zinc-50;
+  }
+
+  .vui-table-head.vui-table-sticky-head th {
+    @apply bg-zinc-100;
   }
 
   .vui-table-sticky-head tr:first-child th {
@@ -183,6 +187,11 @@
   .vui-table-scroll-y {
     max-height: min(70vh, 42rem);
     @apply overflow-y-auto overflow-x-auto;
+  }
+
+  /* Lista principal Cerrar turnos / Turnos cerrados: scroll solo en filas */
+  .shift-list-table-scroll {
+    @apply min-h-0 flex-1 overflow-x-auto overflow-y-auto;
   }
 
   .vui-table-row,

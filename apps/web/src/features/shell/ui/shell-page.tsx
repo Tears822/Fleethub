@@ -7,6 +7,7 @@ export function ShellPage({
   meta,
   actions,
   toolbarTrailing,
+  fillViewport = false,
   children,
 }: {
   title: string;
@@ -14,13 +15,27 @@ export function ShellPage({
   meta?: string;
   actions?: ReactNode;
   toolbarTrailing?: ReactNode;
+  /** Fija cabecera de página y deja scroll solo en el contenido hijo (p. ej. listas de turnos). */
+  fillViewport?: boolean;
   children: ReactNode;
 }) {
   return (
-    <section className="flex min-h-0 flex-1 flex-col space-y-3">
-      <ShellPageHeader title={title} description={description} meta={meta} actions={actions} />
-      {toolbarTrailing ? <ShellPageToolbar trailing={toolbarTrailing} /> : null}
-      <div className="flex min-h-0 flex-1 flex-col gap-3">{children}</div>
+    <section
+      className={`flex flex-col space-y-3 ${fillViewport ? "min-h-0 flex-1" : ""}`}
+    >
+      <ShellPageHeader
+        className={fillViewport ? "shrink-0" : undefined}
+        title={title}
+        description={description}
+        meta={meta}
+        actions={actions}
+      />
+      {toolbarTrailing ? (
+        <ShellPageToolbar className={fillViewport ? "shrink-0" : undefined} trailing={toolbarTrailing} />
+      ) : null}
+      <div className={`flex flex-col gap-3 ${fillViewport ? "min-h-0 flex-1" : ""}`}>
+        {children}
+      </div>
     </section>
   );
 }
@@ -30,14 +45,16 @@ export function ShellPageHeader({
   description,
   meta,
   actions,
+  className,
 }: {
   title: string;
   description?: string;
   meta?: string;
   actions?: ReactNode;
+  className?: string;
 }) {
   return (
-    <header className="shrink-0 border-b border-zinc-200 pb-2">
+    <header className={`border-b border-zinc-200 pb-2 ${className ?? ""}`.trim()}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
           <h1 className="text-lg font-bold tracking-tight text-zinc-900">{title}</h1>
@@ -50,9 +67,15 @@ export function ShellPageHeader({
   );
 }
 
-export function ShellPageToolbar({ trailing }: { trailing?: ReactNode }) {
+export function ShellPageToolbar({
+  trailing,
+  className,
+}: {
+  trailing?: ReactNode;
+  className?: string;
+}) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2">
+    <div className={`flex flex-wrap items-center justify-between gap-2 ${className ?? ""}`.trim()}>
       <ShellCompanyScopeDropdown />
       {trailing ? (
         <div className="flex min-w-0 flex-1 flex-wrap items-center justify-end gap-2 sm:flex-initial">

@@ -33,6 +33,7 @@ export default async function TurnosCerradosPage({
 
   return (
     <ShellPage
+      fillViewport
       title={t("nav.turnosCerrados")}
       description={t("turnos.closedPageDescription", {
         scope: companyScopeLabel,

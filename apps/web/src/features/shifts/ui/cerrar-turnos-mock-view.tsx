@@ -362,37 +362,40 @@ export function CerrarTurnosMockView({
   }, []);
 
   return (
-    <div className="space-y-4">
-      {!usingLiveData ? (
-        <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
-          No hay turnos pendientes de liquidar. Cierre viajes desde operativa o ejecute{" "}
-          <code className="text-xs">npm run seed -w @fleethub/db</code> en el tenant demo-a.
-        </p>
-      ) : (
-        <p className="text-xs text-zinc-500">
-          {t("turnos.helpIntro")}{" "}
-          <span className="font-medium text-zinc-700">{t("turnos.helpAvisos")}</span>
-        </p>
-      )}
-      <p className="text-sm text-zinc-600">
-        {hasActiveFilters && filteredRows.length !== rows.length ? (
-          <>
-            <span className="font-semibold text-zinc-900">
-              {t("turnos.driversPendingFiltered", {
-                filtered: filteredRows.length,
-                total: rows.length,
-              })}
-            </span>
-          </>
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="shrink-0 space-y-3">
+        {!usingLiveData ? (
+          <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+            No hay turnos pendientes de liquidar. Cierre viajes desde operativa o ejecute{" "}
+            <code className="text-xs">npm run seed -w @fleethub/db</code> en el tenant demo-a.
+          </p>
         ) : (
-          <span className="font-semibold text-zinc-900">
-            {t("turnos.driversPending", { count: filteredRows.length })}
-          </span>
+          <p className="text-xs text-zinc-500">
+            {t("turnos.helpIntro")}{" "}
+            <span className="font-medium text-zinc-700">{t("turnos.helpAvisos")}</span>
+          </p>
         )}
-      </p>
+        <p className="text-sm text-zinc-600">
+          {hasActiveFilters && filteredRows.length !== rows.length ? (
+            <>
+              <span className="font-semibold text-zinc-900">
+                {t("turnos.driversPendingFiltered", {
+                  filtered: filteredRows.length,
+                  total: rows.length,
+                })}
+              </span>
+            </>
+          ) : (
+            <span className="font-semibold text-zinc-900">
+              {t("turnos.driversPending", { count: filteredRows.length })}
+            </span>
+          )}
+        </p>
+      </div>
 
-      <VuiPanel className="space-y-4 p-4 md:p-5">
-        <div className="flex flex-wrap items-center gap-2">
+      <VuiPanel className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 md:p-5">
+        <div className="shrink-0 space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
           <ErpSearchInput
             value={searchQuery}
             onChange={setSearchQuery}
@@ -439,7 +442,7 @@ export function CerrarTurnosMockView({
           >
             {t("turnos.clearFilters")}
           </button>
-        </div>
+          </div>
 
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-zinc-200 pb-2">
           <div className="flex items-center gap-2">
@@ -476,8 +479,9 @@ export function CerrarTurnosMockView({
             </button>
           ) : null}
         </div>
+        </div>
 
-        <VuiTableShell className="overflow-x-auto overflow-y-visible">
+        <VuiTableShell className="shift-list-table-scroll min-h-[8rem]">
           <table className="w-full min-w-[1180px] text-left text-sm">
             <thead className="vui-table-head vui-table-sticky-head">
               <ShiftMetricsSortableHead

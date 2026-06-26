@@ -95,7 +95,7 @@ function detailGroupTint(i: number): string {
     if (i === 8) return GROUP_CELL_PAGO_R;
     return GROUP_CELL_PAGO_M;
   }
-  return "";
+  return "bg-zinc-50";
 }
 
 export function blockTotalToMetrics(block: PlatformBlock): PlatformShiftMetrics {
@@ -573,7 +573,7 @@ function TripDetailTable({
       <table className="w-full min-w-[900px] border-collapse text-left text-[11px]">
         <thead className="vui-table-sticky-head">
           <tr className="text-[10px] font-bold uppercase tracking-wide">
-            <th className="px-2 py-1.5" colSpan={3} aria-hidden />
+            <th className="bg-zinc-50 px-2 py-1.5" colSpan={3} aria-hidden />
             <th
               className="border-x border-t border-sky-200 bg-sky-100 px-2 py-1.5 text-center text-sky-800"
               colSpan={3}
@@ -586,7 +586,7 @@ function TripDetailTable({
             >
               {t("turnos.detail.groups.pago")}
             </th>
-            <th className="px-2 py-1.5" colSpan={5} aria-hidden />
+            <th className="bg-zinc-50 px-2 py-1.5" colSpan={5} aria-hidden />
           </tr>
           <tr className="border-b border-zinc-200 bg-zinc-50 text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
             {TRIP_DETAIL_HEADERS.map((h, i) => (

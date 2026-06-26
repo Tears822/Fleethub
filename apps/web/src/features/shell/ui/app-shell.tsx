@@ -262,15 +262,17 @@ function AppShellBody({
                   : "guest"
               }
             />
-            <main className="vision-scrollbar relative min-h-0 flex-1 overflow-y-auto text-zinc-900">
+            <main className="vision-scrollbar relative flex min-h-0 flex-1 flex-col overflow-y-auto text-zinc-900">
               <ShellRouteLoadingIndicator pending={routePending && !loggingOut} />
               <TenantPermissionsProvider role={session.role}>
-                {isReadOnly(session.role) && !session.impersonating ? (
-                  <p className="mb-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
-                    {t("shell.readOnlyBanner")}
-                  </p>
-                ) : null}
-                {children}
+                <div className="flex min-h-0 flex-1 flex-col">
+                  {isReadOnly(session.role) && !session.impersonating ? (
+                    <p className="mb-3 shrink-0 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                      {t("shell.readOnlyBanner")}
+                    </p>
+                  ) : null}
+                  {children}
+                </div>
               </TenantPermissionsProvider>
             </main>
           </div>

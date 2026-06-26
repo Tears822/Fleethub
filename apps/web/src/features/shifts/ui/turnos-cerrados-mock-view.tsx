@@ -230,47 +230,50 @@ export function TurnosCerradosMockView({
     dateTo !== dateToProp;
 
   return (
-    <div className="space-y-4">
-      {!usingLiveData ? (
-        <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
-          No hay liquidaciones en este periodo ({dateFromProp} – {dateToProp}). Liquida en{" "}
-          <a href="/cerrar-turnos" className="font-medium text-zinc-800 underline">
-            Cerrar turnos
-          </a>{" "}
-          o prueba{" "}
-          <code className="text-xs">/turnos-cerrados?{BILLING_DEMO_RANGE_QUERY}</code> tras el seed.
+    <div className="flex min-h-0 flex-1 flex-col gap-3">
+      <div className="shrink-0 space-y-3">
+        {!usingLiveData ? (
+          <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
+            No hay liquidaciones en este periodo ({dateFromProp} – {dateToProp}). Liquida en{" "}
+            <a href="/cerrar-turnos" className="font-medium text-zinc-800 underline">
+              Cerrar turnos
+            </a>{" "}
+            o prueba{" "}
+            <code className="text-xs">/turnos-cerrados?{BILLING_DEMO_RANGE_QUERY}</code> tras el seed.
+          </p>
+        ) : (
+          <p className="text-xs text-zinc-500">
+            Liquidaciones en caja (fecha de cierre en el periodo {dateFromProp} – {dateToProp}).
+            Ajuste fechas y plataforma para acotar la lista.
+            {canRevertClose ? (
+              <>
+                {" "}
+                Como Super Admin puede{" "}
+                <span className="font-medium text-amber-800">revertir un cierre</span> para devolver
+                viajes a pendientes.
+              </>
+            ) : canReopenClosedShift ? (
+              <>
+                {" "}
+                Como administrador puede{" "}
+                <span className="font-medium text-amber-800">modificar un turno cerrado</span>{" "}
+                (los viajes vuelven a Cerrar turnos).
+              </>
+            ) : null}
+          </p>
+        )}
+        <p className="text-sm text-zinc-600">
+          {hasActiveFilters && filteredRows.length !== rows.length
+            ? t("turnos.closedCountFiltered", {
+                filtered: filteredRows.length,
+                total: rows.length,
+              })
+            : t("turnos.closedCount", { count: filteredRows.length })}
         </p>
-      ) : (
-        <p className="text-xs text-zinc-500">
-          Liquidaciones en caja (fecha de cierre en el periodo {dateFromProp} – {dateToProp}).
-          Ajuste fechas y plataforma para acotar la lista.
-          {canRevertClose ? (
-            <>
-              {" "}
-              Como Super Admin puede{" "}
-              <span className="font-medium text-amber-800">revertir un cierre</span> para devolver
-              viajes a pendientes.
-            </>
-          ) : canReopenClosedShift ? (
-            <>
-              {" "}
-              Como administrador puede{" "}
-              <span className="font-medium text-amber-800">modificar un turno cerrado</span>{" "}
-              (los viajes vuelven a Cerrar turnos).
-            </>
-          ) : null}
-        </p>
-      )}
-      <p className="text-sm text-zinc-600">
-        {hasActiveFilters && filteredRows.length !== rows.length
-          ? t("turnos.closedCountFiltered", {
-              filtered: filteredRows.length,
-              total: rows.length,
-            })
-          : t("turnos.closedCount", { count: filteredRows.length })}
-      </p>
+      </div>
 
-      <VuiPanel className="space-y-4 p-4 md:p-5">
+      <VuiPanel className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden p-4 md:p-5">
+        <div className="shrink-0 space-y-4">
         <div className="flex flex-wrap items-center gap-2">
           <ErpSearchInput
             value={searchQuery}
@@ -392,10 +395,11 @@ export function TurnosCerradosMockView({
             />
           ) : null}
         </div>
+        </div>
 
-        <VuiTableShell className="overflow-x-auto">
+        <VuiTableShell className="shift-list-table-scroll min-h-[8rem]">
           <table className="w-full min-w-[1024px] text-left text-sm">
-            <thead className="vui-table-head">
+            <thead className="vui-table-head vui-table-sticky-head">
               <ShiftMetricsSortableHead dirFor={dirFor} toggle={toggleSort} actionsLabel="" />
             </thead>
             <tbody>

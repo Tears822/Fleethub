@@ -25,6 +25,7 @@ export default async function CerrarTurnosPage() {
 
   return (
     <ShellPage
+      fillViewport
       title={t("turnos.cerrar")}
       description={`${companyScopeLabel} · ${t("turnos.pendingSettlement")}`}
     >
