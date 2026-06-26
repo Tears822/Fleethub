@@ -1,0 +1,240 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Vision UI Dashboard — tokens from UI_Refrence/vision-ui-dashboard-react (colors.js, globals.js, sidenav) */
+@layer base {
+  :root {
+    --vision-bg: #050b24;
+    /* colors.js dark.body — html background in Vision globals */
+    --vision-body: #030c1d;
+    --vision-panel: #0f1535;
+    --vision-sidebar: #1a1f37;
+    --vision-border: #56577a;
+    --vision-muted: #a0aec0;
+    --vision-brand: #0075ff;
+    --vision-card: rgba(15, 21, 53, 0.78);
+  }
+
+  html {
+    scroll-behavior: smooth;
+    background-color: #f4f4f5;
+  }
+
+  body {
+    @apply bg-zinc-100 text-zinc-800 antialiased;
+  }
+}
+
+@layer utilities {
+  /** Legacy alias — plain light canvas (no background image). */
+  .vision-body-canvas {
+    @apply bg-zinc-100 text-zinc-800;
+    background-image: none;
+  }
+
+  /* Optional tint for inner strips (no car art — avoids stacking cars on sidebars) */
+  .bg-vision-shell {
+    background-color: transparent;
+    background-image: radial-gradient(
+      69.43% 45% at 50% 0%,
+      rgba(0, 117, 255, 0.12) 0%,
+      transparent 55%
+    );
+  }
+
+  .bg-vision-gradient {
+    background: linear-gradient(
+      125deg,
+      #050b24 0%,
+      #0f1535 42%,
+      #121a35 72%,
+      #0a1028 100%
+    );
+  }
+
+  .vui-input {
+    @apply w-full rounded-vision-xl border border-white/[0.12] bg-vision-panel/80 px-3 py-2.5 text-sm text-white placeholder:text-vision-muted/70 outline-none transition focus:border-vision-brand focus:ring-2 focus:ring-vision-brand/35;
+  }
+
+  .vui-label {
+    @apply mb-1 ml-0.5 block text-[10px] font-bold uppercase tracking-wide text-zinc-600;
+  }
+
+  /* Primary CTA — Vision `info` contained (colors.info.main #0075ff) */
+  .vui-btn-primary {
+    @apply inline-flex w-full items-center justify-center gap-2 rounded-vision-xl bg-vision-brand py-3 text-sm font-semibold uppercase tracking-wide text-white transition hover:brightness-110 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-vision-brand disabled:cursor-not-allowed disabled:opacity-50;
+    box-shadow:
+      0 4px 7px -1px rgba(0, 0, 0, 0.11),
+      0 2px 4px -1px rgba(0, 0, 0, 0.07);
+  }
+
+  .vui-btn-primary:hover {
+    box-shadow:
+      0 3px 5px -1px rgba(0, 0, 0, 0.09),
+      0 2px 5px -1px rgba(0, 0, 0, 0.07);
+  }
+
+  .vui-btn-outline {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg border border-zinc-300 bg-white px-5 py-2.5 text-sm font-medium text-zinc-800 transition hover:bg-zinc-50;
+  }
+
+  .erp-inline-input {
+    @apply rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/30;
+  }
+
+  /** Search inputs with a left icon — do not combine with `erp-inline-input` (its px-3 overrides pl-*). */
+  .erp-search-icon {
+    @apply pointer-events-none absolute left-3 top-1/2 z-[1] h-4 w-4 -translate-y-1/2 text-zinc-400;
+  }
+
+  .erp-search-input {
+    @apply w-full rounded-lg border border-zinc-300 bg-white py-1.5 pl-10 pr-3 text-xs text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-orange-400 focus:ring-1 focus:ring-orange-400/30;
+  }
+
+  .erp-filter-btn {
+    @apply rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-xs font-medium text-zinc-700 transition hover:bg-zinc-50;
+  }
+
+  .erp-tab-bar {
+    @apply flex gap-1 rounded-lg border border-zinc-200 bg-zinc-100 p-1;
+  }
+
+  .erp-tab-active {
+    @apply rounded-md bg-orange-500 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-sm;
+  }
+
+  .erp-tab-inactive {
+    @apply rounded-md px-4 py-2 text-xs font-bold uppercase tracking-wide text-zinc-600 transition hover:bg-white hover:text-zinc-900;
+  }
+
+  /** Prototype tabs — underline on active (Apps, Facturación) */
+  .erp-tabs-underline {
+    @apply flex gap-6 border-b border-zinc-200;
+  }
+
+  .erp-tab-underline {
+    @apply relative pb-2.5 text-xs font-bold uppercase tracking-wide text-zinc-500 transition hover:text-zinc-800;
+  }
+
+  .erp-tab-underline-active {
+    @apply text-zinc-900 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-orange-500;
+  }
+
+  /** KPI card — white tile + colored left accent (dashboard / analítica) */
+  .erp-kpi-card {
+    @apply rounded-xl border border-zinc-200 bg-white p-4 shadow-sm;
+  }
+
+  .erp-kpi-accent-green {
+    @apply border-l-4 border-l-emerald-500;
+  }
+
+  .erp-kpi-accent-amber {
+    @apply border-l-4 border-l-amber-500;
+  }
+
+  .erp-kpi-accent-red {
+    @apply border-l-4 border-l-red-500;
+  }
+
+  .erp-kpi-accent-teal {
+    @apply border-l-4 border-l-teal-500;
+  }
+
+  .erp-tab-underline-active-emerald {
+    @apply text-zinc-900 after:absolute after:bottom-0 after:left-0 after:right-0 after:h-0.5 after:rounded-full after:bg-emerald-600;
+  }
+
+  .erp-btn-success {
+    @apply inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-emerald-700;
+  }
+
+  .erp-sector-sub {
+    @apply text-[10px] text-zinc-500;
+  }
+
+  /* ERP tables — compact, light (tenant + super admin) */
+  .vui-table-head,
+  .erp-table-head,
+  .sa-table-head {
+    @apply bg-zinc-100 text-left text-[10px] font-bold uppercase tracking-wide text-zinc-600;
+  }
+
+  .vui-table-head th,
+  .erp-table-head th,
+  .sa-table-head th {
+    @apply whitespace-nowrap px-3 py-1.5 first:pl-4;
+  }
+
+  .vui-table-row,
+  .erp-table-row,
+  .sa-table-row {
+    @apply border-t border-zinc-100 text-xs text-zinc-700 transition last:border-b-0 hover:bg-zinc-50/80;
+  }
+
+  .vui-table-row td,
+  .erp-table-row td,
+  .sa-table-row td {
+    @apply px-3 py-1.5 align-middle first:pl-4;
+  }
+
+  /**
+   * Custom scrollbars (WebKit + Firefox) — sidebar nav + main shell scroll.
+   */
+  .vision-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 117, 255, 0.45) rgba(255, 255, 255, 0.06);
+  }
+
+  .vision-scrollbar::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .vision-scrollbar::-webkit-scrollbar-track {
+    margin: 4px 0;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 9999px;
+  }
+
+  .vision-scrollbar::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(0, 117, 255, 0.65), rgba(0, 117, 255, 0.28));
+    border-radius: 9999px;
+    border: 2px solid rgba(15, 21, 53, 0.5);
+  }
+
+  .vision-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(0, 117, 255, 0.85), rgba(0, 117, 255, 0.45));
+  }
+
+  .erp-btn-primary,
+  .sa-btn-primary {
+    @apply inline-flex items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-sm transition hover:bg-orange-600;
+  }
+
+  .erp-btn-outline,
+  .sa-btn-outline {
+    @apply inline-flex items-center justify-center rounded-lg border border-zinc-300 bg-white px-4 py-2 text-xs font-bold uppercase tracking-wide text-zinc-800 transition hover:bg-zinc-50;
+  }
+
+  .erp-btn-edit,
+  .sa-btn-edit {
+    @apply inline-flex items-center rounded border border-zinc-300 bg-white px-2 py-0.5 text-[10px] font-semibold text-zinc-700 transition hover:bg-zinc-50;
+  }
+
+  .erp-btn-delete,
+  .sa-btn-delete {
+    @apply rounded bg-red-600 px-2 py-0.5 text-[10px] font-semibold text-white hover:bg-red-700;
+  }
+
+  .erp-input,
+  .sa-input {
+    @apply mt-1 w-full rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm text-zinc-900 placeholder:text-zinc-400 outline-none focus:border-orange-400 focus:ring-2 focus:ring-orange-400/25;
+  }
+
+  .erp-label,
+  .sa-label {
+    @apply block text-xs font-semibold text-zinc-600;
+  }
+}

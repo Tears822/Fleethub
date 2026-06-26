@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+apps/worker/.api/apis/freenow/node_modules/
+.pnp
+.pnp.js
+
+# Build outputs
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+next-env.d.ts
+
+# Caches
+.turbo/
+.cache/
+.eslintcache
+coverage/
+.nyc_output/
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.pem
+
+# Prisma generated client (regenerated on install/build)
+packages/db/node_modules/.prisma/
+**/.prisma/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+logs/
+
+# Runtime data / uploads
+data/uploads/
+*.pid
+*.seed
+
+# Local backups & database dumps
+backups/
+*.dump
+*.sql.gz
+*.tar.gz
+
+# Editor / IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

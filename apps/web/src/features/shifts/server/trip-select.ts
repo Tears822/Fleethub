@@ -1,0 +1,20 @@
+/** Shared Prisma select for shift/trip aggregation queries. */
+export const tripAggregationSelect = {
+  id: true,
+  platform: true,
+  startedAt: true,
+  endedAt: true,
+  fareType: true,
+  grossAmountCents: true,
+  platformFeeCents: true,
+  netAmountCents: true,
+  tipCents: true,
+  platformBonusCents: true,
+  tollCents: true,
+  paymentMethod: true,
+  cashPaymentCents: true,
+  cardPaymentCents: true,
+  appPaymentCents: true,
+  paymentValidated: true,
+  driver: { select: { id: true, fullName: true, isActive: true } },
+} as const;

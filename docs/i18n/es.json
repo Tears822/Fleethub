@@ -1,0 +1,160 @@
+{
+  "common": {
+    "save": "Guardar",
+    "saving": "Guardando…",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "search": "Buscar",
+    "close": "Cerrar",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "yes": "Sí",
+    "no": "No",
+    "loading": "Cargando…",
+    "error": "Error",
+    "success": "Operación completada",
+    "apiConnectionError": "No se pudo conectar con el API.",
+    "panel": "Panel",
+    "settings": "Ajustes"
+  },
+  "shell": {
+    "brandSubtitle": "Gestión VTC · Taxi",
+    "logout": "Cerrar sesión",
+    "loggingOut": "Cerrando sesión…",
+    "closeMenu": "Cerrar menú",
+    "expandMenu": "Expandir menú",
+    "collapseMenu": "Contraer menú",
+    "readOnlyBanner": "Modo solo lectura: puedes consultar y exportar datos. No puedes cerrar turnos ni modificar configuración.",
+    "logoutError": "No se pudo cerrar la sesión",
+    "serverError": "No se pudo conectar con el servidor"
+  },
+  "nav": {
+    "sections": {
+      "operativa": "Operativa",
+      "gestion": "Gestión",
+      "sistema": "Sistema"
+    },
+    "dashboard": "Dashboard",
+    "apps": "Apps",
+    "cerrarTurnos": "Cerrar turnos",
+    "turnosCerrados": "Turnos cerrados",
+    "conductores": "Conductores",
+    "empresas": "Empresas",
+    "facturacion": "Facturación",
+    "analitica": "Analítica",
+    "configuracion": "Configuración"
+  },
+  "auth": {
+    "login": "Iniciar sesión",
+    "logout": "Cerrar sesión",
+    "email": "Email",
+    "password": "Contraseña",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "resetPassword": "Restablecer contraseña",
+    "verifyEmail": "Verificar email",
+    "unauthorized": "No autorizado."
+  },
+  "config": {
+    "title": "Configuración",
+    "description": "Ajustes del tenant",
+    "general": {
+      "title": "Datos generales",
+      "tenantName": "Nombre del tenant",
+      "tenantNameReadonlyHint": "El nombre es gestionado por FleetHub. El identificador interno del tenant es {slug}.",
+      "language": "Idioma",
+      "localeEs": "Español",
+      "localeCa": "Català",
+      "companyHint": "NIF y logo de empresa se gestionan en Empresas (FRD §13). Subida de logo: próximamente.",
+      "saved": "Datos generales guardados.",
+      "saveError": "No se pudieron guardar los datos"
+    },
+    "notifications": {
+      "title": "Notificaciones por email",
+      "smtpConfigured": "SMTP configurado en el servidor (SMTP_USER / SMTP_PASS). Los emails se envían a administradores y gestores activos.",
+      "smtpNotConfigured": "SMTP no configurado: los emails se registran en consola del API en desarrollo. Añade SMTP_* en el servidor para producción.",
+      "pendingShifts": "Turnos pendientes de cierre",
+      "pendingShiftsHint": "Email automático cuando hay viajes sin liquidar hoy (worker + SMTP).",
+      "productivityLow": "Productividad baja",
+      "productivityLowHint": "Aviso cuando conductores superan umbrales de alerta (Apps).",
+      "syncStale": "Sincronización desactualizada",
+      "syncStaleHint": "Aviso si Uber o FreeNow no han sincronizado en el intervalo configurado.",
+      "sendTest": "Enviar email de prueba",
+      "sendingTest": "Enviando…",
+      "saved": "Preferencias de notificación guardadas.",
+      "saveError": "No se pudieron guardar las preferencias",
+      "testEmailTitle": "Prueba FleetHub",
+      "testEmailDescription": "Email de prueba desde Configuración (demo).",
+      "testEmailSent": "Email enviado a {count} destinatario(s).",
+      "testEmailError": "No se pudo enviar el email",
+      "smtpRequired": "Configura SMTP en el servidor"
+    },
+    "productivity": {
+      "title": "Umbrales de productividad",
+      "eurPerHourMin": "€/hora mínimo",
+      "tripsPerHourMin": "Viajes/hora mínimo",
+      "acceptanceRateMin": "Tasa de aceptación mínima (%)",
+      "useFleetDayAverages": "Comparar con medias del día de la flota"
+    },
+    "integrations": {
+      "title": "Integraciones",
+      "uber": "Uber",
+      "freenow": "FreeNow",
+      "bolt": "Bolt",
+      "cabify": "Cabify",
+      "saveIntegration": "Guardar integración",
+      "saveSettings": "Guardar ajustes",
+      "boltSubtitle": "Integración en desarrollo — aún no disponible para sincronizar viajes.",
+      "cabifySubtitle": "Integración en desarrollo — aún no disponible para sincronizar viajes."
+    },
+    "analytics": {
+      "title": "Analítica sectorial",
+      "sectorBenchmarkOptIn": "Contribuir al benchmark sectorial",
+      "sectorBenchmarkHint": "Permite comparar tu flota con datos agregados del sector (opt-in)."
+    },
+    "users": {
+      "title": "Usuarios del tenant",
+      "newUser": "Nuevo usuario",
+      "editUser": "Editar usuario",
+      "resendInvite": "Reenviar invitación",
+      "deleteUser": "Eliminar usuario",
+      "cannotDeleteSelf": "No puedes eliminar tu propia cuenta"
+    },
+    "auditLog": {
+      "title": "Registro de auditoría",
+      "export": "Exportar"
+    },
+    "syncHistory": {
+      "title": "Historial de sincronización"
+    }
+  },
+  "conductores": {
+    "title": "Conductores",
+    "noDniEmail": "Sin DNI ni email",
+    "active": "Activos",
+    "inactive": "Inactivos",
+    "export": "Exportar Excel"
+  },
+  "empresas": {
+    "title": "Empresas",
+    "legalName": "Razón social",
+    "taxId": "NIF/CIF"
+  },
+  "turnos": {
+    "cerrar": "Cerrar turnos",
+    "cerrados": "Turnos cerrados",
+    "pending": "Pendientes",
+    "closed": "Cerrados",
+    "pendingSettlement": "Pendientes de liquidación en caja"
+  },
+  "errors": {
+    "tenantNotFound": "Tenant no encontrado.",
+    "invalidTimezone": "Zona horaria no válida.",
+    "invalidLocale": "Idioma no válido.",
+    "tenantNameRequired": "El nombre del tenant es obligatorio.",
+    "invalidThresholds": "Umbrales no válidos.",
+    "invalidPolling": "Intervalos de polling no válidos (mínimo 5 min).",
+    "invalidUberWindow": "Ventana Uber debe ser entre 1 y 28 días.",
+    "invalidFreenowWindow": "Ventana FreeNow debe ser entre 1 y 28 días."
+  }
+}

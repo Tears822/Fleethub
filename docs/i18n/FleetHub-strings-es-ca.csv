@@ -1,0 +1,123 @@
+key,es,ca,notes
+auth.email,Email,Email,same
+auth.forgotPassword,¿Olvidaste tu contraseña?,Has oblidat la contrasenya?,
+auth.login,Iniciar sesión,Iniciar sessió,
+auth.logout,Cerrar sesión,Tancar sessió,
+auth.password,Contraseña,Contrasenya,
+auth.resetPassword,Restablecer contraseña,Restablir contrasenya,
+auth.unauthorized,No autorizado.,No autoritzat.,
+auth.verifyEmail,Verificar email,Verificar email,same
+common.apiConnectionError,No se pudo conectar con el API.,No s'ha pogut connectar amb l'API.,
+common.back,Volver,Tornar,
+common.cancel,Cancelar,Cancelar,same
+common.close,Cerrar,Tancar,
+common.confirm,Confirmar,Confirmar,same
+common.delete,Eliminar,Eliminar,same
+common.edit,Editar,Editar,same
+common.error,Error,Error,same
+common.loading,Cargando…,Carregant…,
+common.no,No,No,same
+common.panel,Panel,Panell,
+common.save,Guardar,Desar,
+common.saving,Guardando…,Desant…,
+common.search,Buscar,Cercar,
+common.settings,Ajustes,Ajustes,same
+common.success,Operación completada,Operació completada,
+common.yes,Sí,Sí,same
+conductores.active,Activos,Actius,
+conductores.export,Exportar Excel,Exportar Excel,same
+conductores.inactive,Inactivos,Inactius,
+conductores.noDniEmail,Sin DNI ni email,Sense DNI ni email,
+conductores.title,Conductores,Conductors,
+config.analytics.sectorBenchmarkHint,Permite comparar tu flota con datos agregados del sector (opt-in).,Permet comparar la teva flota amb dades agregades del sector (opt-in).,
+config.analytics.sectorBenchmarkOptIn,Contribuir al benchmark sectorial,Contribuir al benchmark sectorial,same
+config.analytics.title,Analítica sectorial,Analítica sectorial,same
+config.auditLog.export,Exportar,Exportar,same
+config.auditLog.title,Registro de auditoría,Registre d'auditoria,
+config.description,Ajustes del tenant,Ajustes del tenant,same
+config.general.companyHint,NIF y logo de empresa se gestionan en Empresas (FRD §13). Subida de logo: próximamente.,NIF i logo d'empresa es gestionen a Empreses (FRD §13). Càrrega de logo: properament.,
+config.general.language,Idioma,Idioma,same
+config.general.localeCa,Català,Català,same
+config.general.localeEs,Español,Español,same
+config.general.saved,Datos generales guardados.,Dades generals desades.,
+config.general.saveError,No se pudieron guardar los datos,No s'han pogut desar les dades,
+config.general.tenantName,Nombre del tenant,Nom del tenant,
+config.general.tenantNameReadonlyHint,El nombre es gestionado por FleetHub. El identificador interno del tenant es {slug}.,El nom és gestionat per FleetHub. L'identificador intern del tenant és {slug}.,
+config.general.title,Datos generales,Dades generals,
+config.integrations.bolt,Bolt,Bolt,same
+config.integrations.boltSubtitle,Integración en desarrollo — aún no disponible para sincronizar viajes.,Integració en desenvolviment — encara no disponible per sincronitzar viatges.,
+config.integrations.cabify,Cabify,Cabify,same
+config.integrations.cabifySubtitle,Integración en desarrollo — aún no disponible para sincronizar viajes.,Integració en desenvolviment — encara no disponible per sincronitzar viatges.,
+config.integrations.freenow,FreeNow,FreeNow,same
+config.integrations.saveIntegration,Guardar integración,Desar integració,
+config.integrations.saveSettings,Guardar ajustes,Desar ajustes,
+config.integrations.title,Integraciones,Integracions,
+config.integrations.uber,Uber,Uber,same
+config.notifications.pendingShifts,Turnos pendientes de cierre,Torns pendents de tancament,
+config.notifications.pendingShiftsHint,Email automático cuando hay viajes sin liquidar hoy (worker + SMTP).,Email automàtic quan hi ha viatges sense liquidar avui (worker + SMTP).,
+config.notifications.productivityLow,Productividad baja,Productivitat baixa,
+config.notifications.productivityLowHint,Aviso cuando conductores superan umbrales de alerta (Apps).,Avís quan conductors superen llindars d'alerta (Apps).,
+config.notifications.saved,Preferencias de notificación guardadas.,Preferències de notificació desades.,
+config.notifications.saveError,No se pudieron guardar las preferencias,No s'han pogut desar les preferències,
+config.notifications.sendingTest,Enviando…,Enviant…,
+config.notifications.sendTest,Enviar email de prueba,Enviar email de prova,
+config.notifications.smtpConfigured,SMTP configurado en el servidor (SMTP_USER / SMTP_PASS). Los emails se envían a administradores y gestores activos.,SMTP configurat al servidor (SMTP_USER / SMTP_PASS). Els emails s'envien a administradors i gestors actius.,
+config.notifications.smtpNotConfigured,SMTP no configurado: los emails se registran en consola del API en desarrollo. Añade SMTP_* en el servidor para producción.,SMTP no configurat: els emails es registren a la consola de l'API en desenvolviment. Afegeix SMTP_* al servidor per producció.,
+config.notifications.smtpRequired,Configura SMTP en el servidor,Configura SMTP al servidor,
+config.notifications.syncStale,Sincronización desactualizada,Sincronització desactualitzada,
+config.notifications.syncStaleHint,Aviso si Uber o FreeNow no han sincronizado en el intervalo configurado.,Avís si Uber o FreeNow no han sincronitzat en l'interval configurat.,
+config.notifications.testEmailDescription,Email de prueba desde Configuración (demo).,Email de prova des de Configuració (demo).,
+config.notifications.testEmailError,No se pudo enviar el email,No s'ha pogut enviar l'email,
+config.notifications.testEmailSent,Email enviado a {count} destinatario(s).,Email enviat a {count} destinatari(s).,
+config.notifications.testEmailTitle,Prueba FleetHub,Prova FleetHub,
+config.notifications.title,Notificaciones por email,Notificacions per email,
+config.productivity.acceptanceRateMin,Tasa de aceptación mínima (%),Taxa d'acceptació mínima (%),
+config.productivity.eurPerHourMin,€/hora mínimo,€/hora mínim,
+config.productivity.title,Umbrales de productividad,Llindars de productivitat,
+config.productivity.tripsPerHourMin,Viajes/hora mínimo,Viatges/hora mínim,
+config.productivity.useFleetDayAverages,Comparar con medias del día de la flota,Comparar amb mitanes del dia de la flota,
+config.syncHistory.title,Historial de sincronización,Historial de sincronització,
+config.title,Configuración,Configuració,
+config.users.cannotDeleteSelf,No puedes eliminar tu propia cuenta,No pots eliminar el teu propi compte,
+config.users.deleteUser,Eliminar usuario,Eliminar usuari,
+config.users.editUser,Editar usuario,Editar usuari,
+config.users.newUser,Nuevo usuario,Nou usuari,
+config.users.resendInvite,Reenviar invitación,Reenviar invitació,
+config.users.title,Usuarios del tenant,Usuaris del tenant,
+empresas.legalName,Razón social,Raó social,
+empresas.taxId,NIF/CIF,NIF/CIF,same
+empresas.title,Empresas,Empreses,
+errors.invalidFreenowWindow,Ventana FreeNow debe ser entre 1 y 28 días.,Finestra FreeNow ha de ser entre 1 i 28 dies.,
+errors.invalidLocale,Idioma no válido.,Idioma no vàlid.,
+errors.invalidPolling,Intervalos de polling no válidos (mínimo 5 min).,Intervals de polling no vàlids (mínim 5 min).,
+errors.invalidThresholds,Umbrales no válidos.,Llindars no vàlids.,
+errors.invalidTimezone,Zona horaria no válida.,Zona horària no vàlida.,
+errors.invalidUberWindow,Ventana Uber debe ser entre 1 y 28 días.,Finestra Uber ha de ser entre 1 i 28 dies.,
+errors.tenantNameRequired,El nombre del tenant es obligatorio.,El nom del tenant és obligatori.,
+errors.tenantNotFound,Tenant no encontrado.,Tenant no trobat.,
+nav.analitica,Analítica,Analítica,same
+nav.apps,Apps,Apps,same
+nav.cerrarTurnos,Cerrar turnos,Tancar torns,
+nav.conductores,Conductores,Conductors,
+nav.configuracion,Configuración,Configuració,
+nav.dashboard,Dashboard,Dashboard,same
+nav.empresas,Empresas,Empreses,
+nav.facturacion,Facturación,Facturació,
+nav.sections.gestion,Gestión,Gestió,
+nav.sections.operativa,Operativa,Operativa,same
+nav.sections.sistema,Sistema,Sistema,same
+nav.turnosCerrados,Turnos cerrados,Torns tancats,
+shell.brandSubtitle,Gestión VTC · Taxi,Gestió VTC · Taxi,
+shell.closeMenu,Cerrar menú,Tancar menú,
+shell.collapseMenu,Contraer menú,Contreure menú,
+shell.expandMenu,Expandir menú,Expandir menú,same
+shell.loggingOut,Cerrando sesión…,Tancant sessió…,
+shell.logout,Cerrar sesión,Tancar sessió,
+shell.logoutError,No se pudo cerrar la sesión,No s'ha pogut tancar la sessió,
+shell.readOnlyBanner,Modo solo lectura: puedes consultar y exportar datos. No puedes cerrar turnos ni modificar configuración.,Mode només lectura: pots consultar i exportar dades. No pots tancar torns ni modificar la configuració.,
+shell.serverError,No se pudo conectar con el servidor,No s'ha pogut connectar amb el servidor,
+turnos.cerrados,Turnos cerrados,Torns tancats,
+turnos.cerrar,Cerrar turnos,Tancar torns,
+turnos.closed,Cerrados,Tancats,
+turnos.pending,Pendientes,Pendents,
+turnos.pendingSettlement,Pendientes de liquidación en caja,Pendents de liquidació en caixa,

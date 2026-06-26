@@ -1,0 +1,17 @@
+[Unit]
+Description=FleetHub PostgreSQL and Redis (Docker Compose)
+Documentation=https://github.com/fleethub
+After=docker.service network-online.target
+Wants=network-online.target
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=%FLEETHUB_ROOT%
+ExecStart=/bin/bash -c 'cd "%FLEETHUB_ROOT%" && %DOCKER_COMPOSE_UP%'
+ExecStop=/bin/bash -c 'cd "%FLEETHUB_ROOT%" && %DOCKER_COMPOSE_DOWN%'
+TimeoutStartSec=180
+
+[Install]
+WantedBy=multi-user.target

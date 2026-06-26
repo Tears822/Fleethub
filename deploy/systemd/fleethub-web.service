@@ -1,0 +1,25 @@
+[Unit]
+Description=FleetHub Web (Next.js)
+Documentation=https://github.com/fleethub
+After=network-online.target fleethub-api.service
+Wants=fleethub-api.service
+PartOf=fleethub.target
+
+[Service]
+Type=simple
+User=%FLEETHUB_USER%
+Group=%FLEETHUB_GROUP%
+WorkingDirectory=%FLEETHUB_ROOT%
+Environment=NODE_ENV=production
+Environment=PORT=3000
+Environment=HOSTNAME=0.0.0.0
+Environment=NODE_OPTIONS=--max-http-header-size=65536
+EnvironmentFile=-%FLEETHUB_ROOT%/.env
+EnvironmentFile=-%FLEETHUB_ROOT%/apps/web/.env.local
+ExecStart=%NPM_BIN% run start:web
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=fleethub.target

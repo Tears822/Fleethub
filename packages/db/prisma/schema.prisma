@@ -1,0 +1,419 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TenantRole {
+  ADMIN_TENANT
+  GESTOR
+  SOLO_LECTURA
+}
+
+/** Platform operators (Super Admin) — not scoped to a single tenant. */
+enum PlatformRole {
+  SUPER_ADMIN
+}
+
+enum RidePlatform {
+  UBER
+  FREENOW
+  BOLT
+  CABIFY
+}
+
+/** FRD §12 — commercial lifecycle for a tenant account. */
+enum TenantCommercialStatus {
+  TRIAL
+  ACTIVE
+  SUSPENDED
+}
+
+model PlatformUser {
+  id                String       @id @default(uuid()) @db.Uuid
+  email             String       @unique
+  passwordHash      String       @map("password_hash")
+  role              PlatformRole @default(SUPER_ADMIN)
+  firstName         String?      @map("first_name")
+  lastName          String?      @map("last_name")
+  isActive          Boolean      @default(true) @map("is_active")
+  emailVerifiedAt   DateTime?    @map("email_verified_at")
+  totpSecret        String?      @map("totp_secret")
+  totpEnabled       Boolean      @default(false) @map("totp_enabled")
+  totpBackupHashes  Json?        @map("totp_backup_hashes")
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  @@map("platform_users")
+}
+
+model Tenant {
+  id                String                 @id @default(uuid()) @db.Uuid
+  name              String
+  slug              String                 @unique
+  timezone          String                 @default("Europe/Madrid")
+  locale            String                 @default("es")
+  commercialStatus  TenantCommercialStatus @default(ACTIVE) @map("commercial_status")
+  trialEndsAt       DateTime?              @map("trial_ends_at")
+  /** Productivity thresholds and other tenant prefs (no external integration config). */
+  settings          Json                   @default("{}")
+  createdAt         DateTime               @default(now()) @map("created_at")
+  updatedAt         DateTime               @updatedAt @map("updated_at")
+
+  companies              Company[]
+  users                  User[]
+  drivers                   Driver[]
+  driverVehicleAssignments  DriverVehicleAssignment[]
+  driverPlatformAccounts    DriverPlatformAccount[]
+  trips                     Trip[]
+  shiftLiquidations         ShiftLiquidation[]
+  driverPlatformDayMetrics  DriverPlatformDayMetric[]
+  syncRuns               SyncRun[]
+  ingestionEvents        IngestionEvent[]
+  ingestionHourlyRollups IngestionHourlyRollup[]
+  auditLogs              AuditLog[]
+
+  @@map("tenants")
+}
+
+model Company {
+  id        String   @id @default(uuid()) @db.Uuid
+  tenantId  String   @map("tenant_id") @db.Uuid
+  legalName String   @map("legal_name")
+  taxId     String?  @map("tax_id")
+  /** Address, contact, banking — no document binaries. */
+  profile   Json     @default("{}")
+  isActive  Boolean  @default(true) @map("is_active")
+  logoUrl   String?  @map("logo_url")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant      Tenant        @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  drivers     Driver[]
+  userLinks   UserCompany[]
+
+  @@unique([tenantId, taxId])
+  @@index([tenantId])
+  @@map("companies")
+}
+
+model User {
+  id               String     @id @default(uuid()) @db.Uuid
+  tenantId         String     @map("tenant_id") @db.Uuid
+  email            String
+  passwordHash     String     @map("password_hash")
+  role             TenantRole @default(SOLO_LECTURA)
+  firstName        String?    @map("first_name")
+  lastName         String?    @map("last_name")
+  isActive         Boolean    @default(true) @map("is_active")
+  emailVerifiedAt  DateTime?  @map("email_verified_at")
+  totpSecret       String?    @map("totp_secret")
+  totpEnabled      Boolean    @default(false) @map("totp_enabled")
+  totpBackupHashes Json?      @map("totp_backup_hashes")
+  /** UI language preference (es / ca); independent of tenant locale. */
+  locale           String     @default("es")
+  createdAt        DateTime   @default(now()) @map("created_at")
+  updatedAt        DateTime   @updatedAt @map("updated_at")
+
+  tenant    Tenant          @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  companies UserCompany[]
+
+  @@unique([tenantId, email])
+  @@index([tenantId])
+  @@map("users")
+}
+
+/** User may access several companies (razones sociales) within the same tenant. */
+model UserCompany {
+  userId    String @map("user_id") @db.Uuid
+  companyId String @map("company_id") @db.Uuid
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@id([userId, companyId])
+  @@index([companyId])
+  @@map("user_companies")
+}
+
+enum AuthTokenType {
+  PASSWORD_RESET
+  EMAIL_VERIFY
+  USER_INVITE
+}
+
+enum AuthSubjectType {
+  PLATFORM_USER
+  TENANT_USER
+}
+
+model AuthToken {
+  id          String          @id @default(uuid()) @db.Uuid
+  type        AuthTokenType
+  subjectType AuthSubjectType @map("subject_type")
+  subjectId   String          @map("subject_id") @db.Uuid
+  tokenHash   String          @unique @map("token_hash")
+  expiresAt   DateTime        @map("expires_at")
+  consumedAt  DateTime?       @map("consumed_at")
+  payload     Json?
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  @@index([subjectType, subjectId])
+  @@map("auth_tokens")
+}
+
+model LoginAttempt {
+  id        String   @id @default(uuid()) @db.Uuid
+  email     String
+  tenantKey String   @map("tenant_key")
+  ip        String?  @db.Inet
+  success   Boolean
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([email, tenantKey, createdAt(sort: Desc)])
+  @@map("login_attempts")
+}
+
+model Driver {
+  id               String    @id @default(uuid()) @db.Uuid
+  tenantId         String    @map("tenant_id") @db.Uuid
+  companyId        String    @map("company_id") @db.Uuid
+  fullName         String    @map("full_name")
+  dni              String?
+  phone            String?
+  email            String?
+  birthDate        DateTime? @map("birth_date") @db.Date
+  licenseNumber    String?   @map("license_number")
+  vehiclePlate     String?   @map("vehicle_plate")
+  vehicleModel     String?   @map("vehicle_model")
+  driverSharePct            Int?    @map("driver_share_pct")
+  driverBonusSharePct       Int?    @map("driver_bonus_share_pct")
+  driverPlatformFeeSharePct Int?    @map("driver_platform_fee_share_pct")
+  dailyFixedCents           BigInt? @map("daily_fixed_cents")
+  isActive         Boolean   @default(true) @map("is_active")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  tenant                   Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  company                  Company                    @relation(fields: [companyId], references: [id], onDelete: Restrict)
+  driverPlatformAccounts   DriverPlatformAccount[]
+  vehicleAssignments       DriverVehicleAssignment[]
+  trips                    Trip[]
+  shiftLiquidations        ShiftLiquidation[]
+  platformDayMetrics       DriverPlatformDayMetric[]
+
+  @@index([tenantId])
+  @@index([companyId])
+  @@map("drivers")
+}
+
+/** FRD §8 — historial de asignaciones de vehículo por conductor. */
+model DriverVehicleAssignment {
+  id           String    @id @default(uuid()) @db.Uuid
+  tenantId     String    @map("tenant_id") @db.Uuid
+  driverId     String    @map("driver_id") @db.Uuid
+  vehiclePlate String    @map("vehicle_plate")
+  vehicleModel String?   @map("vehicle_model")
+  assignedAt   DateTime  @map("assigned_at")
+  unassignedAt DateTime? @map("unassigned_at")
+  note         String?
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, driverId, assignedAt(sort: Desc)])
+  @@map("driver_vehicle_assignments")
+}
+
+model DriverPlatformAccount {
+  id                 String        @id @default(uuid()) @db.Uuid
+  tenantId           String        @map("tenant_id") @db.Uuid
+  driverId           String        @map("driver_id") @db.Uuid
+  platform           RidePlatform
+  externalDriverId   String        @map("external_driver_id")
+  credentialsEncrypted Bytes?     @map("credentials_encrypted")
+  metadata           Json          @default("{}")
+  isActive           Boolean       @default(true) @map("is_active")
+  createdAt          DateTime      @default(now()) @map("created_at")
+  updatedAt          DateTime      @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  trips  Trip[]
+
+  @@unique([tenantId, platform, externalDriverId])
+  @@index([tenantId, driverId])
+  @@map("driver_platform_accounts")
+}
+
+model Trip {
+  id                       String        @id @default(uuid()) @db.Uuid
+  tenantId                 String        @map("tenant_id") @db.Uuid
+  driverId                 String        @map("driver_id") @db.Uuid
+  driverPlatformAccountId  String        @map("driver_platform_account_id") @db.Uuid
+  platform                 RidePlatform
+  externalTripId           String        @map("external_trip_id")
+  startedAt                DateTime      @map("started_at")
+  endedAt                  DateTime?     @map("ended_at")
+  fareType                 String?       @map("fare_type")
+  grossAmountCents         BigInt?       @map("gross_amount_cents")
+  platformFeeCents         BigInt?       @map("platform_fee_cents")
+  tipCents                   BigInt?       @map("tip_cents")
+  platformBonusCents         BigInt?       @map("platform_bonus_cents")
+  tollCents                  BigInt?       @map("toll_cents")
+  netAmountCents             BigInt?       @map("net_amount_cents")
+  paymentMethod              String?       @map("payment_method")
+  /** Reparto manual efectivo/tarjeta/app (céntimos). Si null, todo el neto va al `paymentMethod`. */
+  cashPaymentCents           BigInt?       @map("cash_payment_cents")
+  cardPaymentCents           BigInt?       @map("card_payment_cents")
+  appPaymentCents            BigInt?       @map("app_payment_cents")
+  paymentValidated           Boolean       @default(false) @map("payment_validated")
+  liquidationStatus          String        @default("pending") @map("liquidation_status")
+  ingestSource               String?       @map("ingest_source")
+  rawPayloadId               String?       @map("raw_payload_id") @db.Uuid
+  createdAt                  DateTime      @default(now()) @map("created_at")
+  updatedAt                  DateTime      @updatedAt @map("updated_at")
+
+  tenant                Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  driver                Driver                @relation(fields: [driverId], references: [id], onDelete: Cascade)
+  driverPlatformAccount DriverPlatformAccount @relation(fields: [driverPlatformAccountId], references: [id], onDelete: Restrict)
+
+  @@unique([tenantId, platform, externalTripId])
+  @@index([tenantId, startedAt])
+  @@index([tenantId, driverId, startedAt])
+  @@index([tenantId, liquidationStatus])
+  @@map("trips")
+}
+
+/** One persisted row per cierre de turno / liquidación en caja (FRD §7). */
+model ShiftLiquidation {
+  id             String       @id @default(uuid()) @db.Uuid
+  tenantId       String       @map("tenant_id") @db.Uuid
+  driverId       String       @map("driver_id") @db.Uuid
+  closedAt       DateTime     @default(now()) @map("closed_at")
+  periodFrom     DateTime     @map("period_from")
+  periodTo       DateTime     @map("period_to")
+  tripIds        String[]     @map("trip_ids") @db.Uuid
+  platform       RidePlatform?
+  note           String?
+  summary        Json         @default("{}")
+  status         String       @default("active")
+  closedByUserId String?      @map("closed_by_user_id") @db.Uuid
+  revertedAt     DateTime?    @map("reverted_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  driver Driver @relation(fields: [driverId], references: [id], onDelete: Restrict)
+
+  @@index([tenantId, closedAt(sort: Desc)])
+  @@index([tenantId, driverId, closedAt(sort: Desc)])
+  @@index([tenantId, status])
+  @@map("shift_liquidations")
+}
+
+/** Platform KPIs for a driver on a calendar day (FRD §6 — horas activo, ofertas). */
+model DriverPlatformDayMetric {
+  id                 String       @id @default(uuid()) @db.Uuid
+  tenantId           String       @map("tenant_id") @db.Uuid
+  driverId           String       @map("driver_id") @db.Uuid
+  platform           RidePlatform
+  day                DateTime     @map("day") @db.Date
+  hoursOnlineMinutes Int          @default(0) @map("hours_online_minutes")
+  missedOffers       Int          @default(0) @map("missed_offers")
+  rejectedTrips      Int          @default(0) @map("rejected_trips")
+  createdAt          DateTime     @default(now()) @map("created_at")
+  updatedAt          DateTime     @updatedAt @map("updated_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  driver Driver @relation(fields: [driverId], references: [id], onDelete: Cascade)
+
+  @@unique([tenantId, driverId, platform, day])
+  @@index([tenantId, driverId, day])
+  @@map("driver_platform_day_metrics")
+}
+
+model SyncRun {
+  id           String        @id @default(uuid()) @db.Uuid
+  tenantId     String        @map("tenant_id") @db.Uuid
+  platform     RidePlatform
+  startedAt    DateTime      @default(now()) @map("started_at")
+  finishedAt   DateTime?     @map("finished_at")
+  status       String
+  errorMessage String?       @map("error_message")
+  cursorHint   Json?         @map("cursor_hint")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, platform, startedAt(sort: Desc)])
+  @@map("sync_runs")
+}
+
+/** Per-trip (or webhook) ingest telemetry for duplicate/latency KPIs. */
+model IngestionEvent {
+  id                String       @id @default(uuid()) @db.Uuid
+  tenantId          String       @map("tenant_id") @db.Uuid
+  platform          RidePlatform
+  entityType        String       @default("trip") @map("entity_type")
+  externalEntityId  String       @map("external_entity_id")
+  ingestSource      String       @map("ingest_source")
+  platformEventAt   DateTime?    @map("platform_event_at")
+  receivedAt        DateTime     @default(now()) @map("received_at")
+  processedAt       DateTime     @default(now()) @map("processed_at")
+  outcome           String
+  latencyMs         Int?         @map("latency_ms")
+  priorIngestSource String?      @map("prior_ingest_source")
+  webhookEventId    String?      @map("webhook_event_id")
+  syncRunId         String?      @map("sync_run_id") @db.Uuid
+  errorMessage      String?      @map("error_message")
+  metadata          Json         @default("{}")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId, platform, receivedAt(sort: Desc)])
+  @@index([tenantId, outcome, receivedAt(sort: Desc)])
+  @@index([tenantId, platform, externalEntityId])
+  @@map("ingestion_events")
+}
+
+/** Hourly aggregates from `ingestion_events` for fast 24h / 7d charts. */
+model IngestionHourlyRollup {
+  tenantId      String   @map("tenant_id") @db.Uuid
+  bucketStart   DateTime @map("bucket_start")
+  totalEvents   Int      @default(0) @map("total_events")
+  duplicates    Int      @default(0)
+  webhookEvents Int      @default(0) @map("webhook_events")
+  pollEvents    Int      @default(0) @map("poll_events")
+  errors        Int      @default(0)
+  latencySumMs  BigInt   @default(0) @map("latency_sum_ms")
+  latencyCount  Int      @default(0) @map("latency_count")
+  p95LatencyMs  Int?     @map("p95_latency_ms")
+  refreshedAt   DateTime @default(now()) @map("refreshed_at")
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@id([tenantId, bucketStart])
+  @@index([bucketStart(sort: Desc)])
+  @@map("ingestion_hourly_rollups")
+}
+
+model AuditLog {
+  id          BigInt    @id @default(autoincrement())
+  tenantId    String?   @map("tenant_id") @db.Uuid
+  actorUserId String?   @map("actor_user_id") @db.Uuid
+  action      String
+  entityType  String?   @map("entity_type")
+  entityId    String?   @map("entity_id") @db.Uuid
+  ip          String?   @db.Inet
+  payload     Json?
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  tenant Tenant? @relation(fields: [tenantId], references: [id], onDelete: SetNull)
+
+  @@index([tenantId, createdAt(sort: Desc)])
+  @@map("audit_logs")
+}

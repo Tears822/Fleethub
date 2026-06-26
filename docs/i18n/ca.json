@@ -1,0 +1,160 @@
+{
+  "common": {
+    "save": "Desar",
+    "saving": "Desant…",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "search": "Cercar",
+    "close": "Tancar",
+    "confirm": "Confirmar",
+    "back": "Tornar",
+    "yes": "Sí",
+    "no": "No",
+    "loading": "Carregant…",
+    "error": "Error",
+    "success": "Operació completada",
+    "apiConnectionError": "No s'ha pogut connectar amb l'API.",
+    "panel": "Panell",
+    "settings": "Ajustes"
+  },
+  "shell": {
+    "brandSubtitle": "Gestió VTC · Taxi",
+    "logout": "Tancar sessió",
+    "loggingOut": "Tancant sessió…",
+    "closeMenu": "Tancar menú",
+    "expandMenu": "Expandir menú",
+    "collapseMenu": "Contreure menú",
+    "readOnlyBanner": "Mode només lectura: pots consultar i exportar dades. No pots tancar torns ni modificar la configuració.",
+    "logoutError": "No s'ha pogut tancar la sessió",
+    "serverError": "No s'ha pogut connectar amb el servidor"
+  },
+  "nav": {
+    "sections": {
+      "operativa": "Operativa",
+      "gestion": "Gestió",
+      "sistema": "Sistema"
+    },
+    "dashboard": "Dashboard",
+    "apps": "Apps",
+    "cerrarTurnos": "Tancar torns",
+    "turnosCerrados": "Torns tancats",
+    "conductores": "Conductors",
+    "empresas": "Empreses",
+    "facturacion": "Facturació",
+    "analitica": "Analítica",
+    "configuracion": "Configuració"
+  },
+  "auth": {
+    "login": "Iniciar sessió",
+    "logout": "Tancar sessió",
+    "email": "Email",
+    "password": "Contrasenya",
+    "forgotPassword": "Has oblidat la contrasenya?",
+    "resetPassword": "Restablir contrasenya",
+    "verifyEmail": "Verificar email",
+    "unauthorized": "No autoritzat."
+  },
+  "config": {
+    "title": "Configuració",
+    "description": "Ajustes del tenant",
+    "general": {
+      "title": "Dades generals",
+      "tenantName": "Nom del tenant",
+      "tenantNameReadonlyHint": "El nom és gestionat per FleetHub. L'identificador intern del tenant és {slug}.",
+      "language": "Idioma",
+      "localeEs": "Español",
+      "localeCa": "Català",
+      "companyHint": "NIF i logo d'empresa es gestionen a Empreses (FRD §13). Càrrega de logo: properament.",
+      "saved": "Dades generals desades.",
+      "saveError": "No s'han pogut desar les dades"
+    },
+    "notifications": {
+      "title": "Notificacions per email",
+      "smtpConfigured": "SMTP configurat al servidor (SMTP_USER / SMTP_PASS). Els emails s'envien a administradors i gestors actius.",
+      "smtpNotConfigured": "SMTP no configurat: els emails es registren a la consola de l'API en desenvolviment. Afegeix SMTP_* al servidor per producció.",
+      "pendingShifts": "Torns pendents de tancament",
+      "pendingShiftsHint": "Email automàtic quan hi ha viatges sense liquidar avui (worker + SMTP).",
+      "productivityLow": "Productivitat baixa",
+      "productivityLowHint": "Avís quan conductors superen llindars d'alerta (Apps).",
+      "syncStale": "Sincronització desactualitzada",
+      "syncStaleHint": "Avís si Uber o FreeNow no han sincronitzat en l'interval configurat.",
+      "sendTest": "Enviar email de prova",
+      "sendingTest": "Enviant…",
+      "saved": "Preferències de notificació desades.",
+      "saveError": "No s'han pogut desar les preferències",
+      "testEmailTitle": "Prova FleetHub",
+      "testEmailDescription": "Email de prova des de Configuració (demo).",
+      "testEmailSent": "Email enviat a {count} destinatari(s).",
+      "testEmailError": "No s'ha pogut enviar l'email",
+      "smtpRequired": "Configura SMTP al servidor"
+    },
+    "productivity": {
+      "title": "Llindars de productivitat",
+      "eurPerHourMin": "€/hora mínim",
+      "tripsPerHourMin": "Viatges/hora mínim",
+      "acceptanceRateMin": "Taxa d'acceptació mínima (%)",
+      "useFleetDayAverages": "Comparar amb mitanes del dia de la flota"
+    },
+    "integrations": {
+      "title": "Integracions",
+      "uber": "Uber",
+      "freenow": "FreeNow",
+      "bolt": "Bolt",
+      "cabify": "Cabify",
+      "saveIntegration": "Desar integració",
+      "saveSettings": "Desar ajustes",
+      "boltSubtitle": "Integració en desenvolviment — encara no disponible per sincronitzar viatges.",
+      "cabifySubtitle": "Integració en desenvolviment — encara no disponible per sincronitzar viatges."
+    },
+    "analytics": {
+      "title": "Analítica sectorial",
+      "sectorBenchmarkOptIn": "Contribuir al benchmark sectorial",
+      "sectorBenchmarkHint": "Permet comparar la teva flota amb dades agregades del sector (opt-in)."
+    },
+    "users": {
+      "title": "Usuaris del tenant",
+      "newUser": "Nou usuari",
+      "editUser": "Editar usuari",
+      "resendInvite": "Reenviar invitació",
+      "deleteUser": "Eliminar usuari",
+      "cannotDeleteSelf": "No pots eliminar el teu propi compte"
+    },
+    "auditLog": {
+      "title": "Registre d'auditoria",
+      "export": "Exportar"
+    },
+    "syncHistory": {
+      "title": "Historial de sincronització"
+    }
+  },
+  "conductores": {
+    "title": "Conductors",
+    "noDniEmail": "Sense DNI ni email",
+    "active": "Actius",
+    "inactive": "Inactius",
+    "export": "Exportar Excel"
+  },
+  "empresas": {
+    "title": "Empreses",
+    "legalName": "Raó social",
+    "taxId": "NIF/CIF"
+  },
+  "turnos": {
+    "cerrar": "Tancar torns",
+    "cerrados": "Torns tancats",
+    "pending": "Pendents",
+    "closed": "Tancats",
+    "pendingSettlement": "Pendents de liquidació en caixa"
+  },
+  "errors": {
+    "tenantNotFound": "Tenant no trobat.",
+    "invalidTimezone": "Zona horària no vàlida.",
+    "invalidLocale": "Idioma no vàlid.",
+    "tenantNameRequired": "El nom del tenant és obligatori.",
+    "invalidThresholds": "Llindars no vàlids.",
+    "invalidPolling": "Intervals de polling no vàlids (mínim 5 min).",
+    "invalidUberWindow": "Finestra Uber ha de ser entre 1 i 28 dies.",
+    "invalidFreenowWindow": "Finestra FreeNow ha de ser entre 1 i 28 dies."
+  }
+}

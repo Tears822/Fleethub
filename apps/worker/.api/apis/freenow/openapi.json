@@ -1,0 +1,2090 @@
+{
+  "openapi": "3.0.1",
+  "servers": [
+    {
+      "url": "https://api.live.free-now.com/partnerpublicgatewayservice",
+      "description": "LIVE"
+    }
+  ],
+  "info": {
+    "title": "FREENOW - Supply - Meta account",
+    "description": "partnerpublicgatewayservice",
+    "version": "0.0.6"
+  },
+  "security": [
+    {
+      "bearerAuth": []
+    }
+  ],
+  "paths": {
+    "/api/v1/linked-companies": {
+      "get": {
+        "tags": [
+          "partnerpublicgatewayservice"
+        ],
+        "operationId": "getLinkedCompanies",
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0,
+              "minimum": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20,
+              "minimum": 1
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "content",
+                    "metadata"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "content": {
+                      "type": "array",
+                      "items": {
+                        "required": [
+                          "companyName",
+                          "id"
+                        ],
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "companyName": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "metadata": {
+                      "required": [
+                        "page",
+                        "pageSize",
+                        "totalElements",
+                        "totalPages"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "pageSize": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "totalElements": {
+                          "type": "integer",
+                          "format": "int32"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{publicCompanyId}/earnings": {
+      "get": {
+        "tags": [
+          "partnerpublicgatewayservice"
+        ],
+        "operationId": "getCompanyEarnings",
+        "parameters": [
+          {
+            "name": "publicCompanyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "grossValues",
+                    "metadata",
+                    "netValues"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "grossValues": {
+                      "required": [
+                        "airportFees",
+                        "cancellations",
+                        "cityFees",
+                        "commission",
+                        "commissionCharged",
+                        "commissionRefunded",
+                        "hotelFees",
+                        "incentives",
+                        "other",
+                        "tips",
+                        "tolls",
+                        "totalAfterCommission",
+                        "totalBeforeCommission",
+                        "totalFreeNowBalance",
+                        "tours",
+                        "waitingTime"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "tours": {
+                          "required": [
+                            "metered",
+                            "nonAppPayments",
+                            "nonMetered",
+                            "numberOfTours",
+                            "paidByApp",
+                            "total",
+                            "tripAdjustment"
+                          ],
+                          "type": "object",
+                          "properties": {
+                            "paidByApp": {
+                              "type": "number"
+                            },
+                            "nonAppPayments": {
+                              "type": "number"
+                            },
+                            "metered": {
+                              "type": "number"
+                            },
+                            "nonMetered": {
+                              "type": "number"
+                            },
+                            "tripAdjustment": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "numberOfTours": {
+                              "type": "integer",
+                              "format": "int64"
+                            }
+                          }
+                        },
+                        "incentives": {
+                          "type": "number"
+                        },
+                        "tolls": {
+                          "type": "number"
+                        },
+                        "tips": {
+                          "type": "number"
+                        },
+                        "cancellations": {
+                          "type": "number"
+                        },
+                        "waitingTime": {
+                          "type": "number"
+                        },
+                        "cityFees": {
+                          "type": "number"
+                        },
+                        "airportFees": {
+                          "type": "number"
+                        },
+                        "hotelFees": {
+                          "type": "number"
+                        },
+                        "other": {
+                          "type": "number"
+                        },
+                        "totalBeforeCommission": {
+                          "type": "number"
+                        },
+                        "commission": {
+                          "type": "number"
+                        },
+                        "commissionCharged": {
+                          "type": "number"
+                        },
+                        "commissionRefunded": {
+                          "type": "number"
+                        },
+                        "totalAfterCommission": {
+                          "type": "number"
+                        },
+                        "totalFreeNowBalance": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "netValues": {
+                      "required": [
+                        "airportFees",
+                        "cancellations",
+                        "cityFees",
+                        "commission",
+                        "commissionCharged",
+                        "commissionRefunded",
+                        "hotelFees",
+                        "incentives",
+                        "other",
+                        "tips",
+                        "tolls",
+                        "totalAfterCommission",
+                        "totalBeforeCommission",
+                        "totalFreeNowBalance",
+                        "tours",
+                        "waitingTime"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "tours": {
+                          "required": [
+                            "metered",
+                            "nonAppPayments",
+                            "nonMetered",
+                            "numberOfTours",
+                            "paidByApp",
+                            "total",
+                            "tripAdjustment"
+                          ],
+                          "type": "object",
+                          "properties": {
+                            "paidByApp": {
+                              "type": "number"
+                            },
+                            "nonAppPayments": {
+                              "type": "number"
+                            },
+                            "metered": {
+                              "type": "number"
+                            },
+                            "nonMetered": {
+                              "type": "number"
+                            },
+                            "tripAdjustment": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "numberOfTours": {
+                              "type": "integer",
+                              "format": "int64"
+                            }
+                          }
+                        },
+                        "incentives": {
+                          "type": "number"
+                        },
+                        "tolls": {
+                          "type": "number"
+                        },
+                        "tips": {
+                          "type": "number"
+                        },
+                        "cancellations": {
+                          "type": "number"
+                        },
+                        "waitingTime": {
+                          "type": "number"
+                        },
+                        "cityFees": {
+                          "type": "number"
+                        },
+                        "airportFees": {
+                          "type": "number"
+                        },
+                        "hotelFees": {
+                          "type": "number"
+                        },
+                        "other": {
+                          "type": "number"
+                        },
+                        "totalBeforeCommission": {
+                          "type": "number"
+                        },
+                        "commission": {
+                          "type": "number"
+                        },
+                        "commissionCharged": {
+                          "type": "number"
+                        },
+                        "commissionRefunded": {
+                          "type": "number"
+                        },
+                        "totalAfterCommission": {
+                          "type": "number"
+                        },
+                        "totalFreeNowBalance": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "metadata": {
+                      "required": [
+                        "currency",
+                        "endDate",
+                        "startDate"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "currency": {
+                          "type": "string"
+                        },
+                        "startDate": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "endDate": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{publicCompanyId}/drivers": {
+      "get": {
+        "tags": [
+          "partnerpublicgatewayservice"
+        ],
+        "operationId": "getCompanyDriversPaginated",
+        "parameters": [
+          {
+            "name": "publicCompanyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "ACTIVE",
+              "enum": [
+                "ACTIVE",
+                "PENDING",
+                "ABUSE"
+              ]
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "content",
+                    "metadata"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "content": {
+                      "type": "array",
+                      "items": {
+                        "required": [
+                          "id",
+                          "name"
+                        ],
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "metadata": {
+                      "required": [
+                        "page",
+                        "pageSize",
+                        "totalElements",
+                        "totalPages"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "pageSize": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "totalElements": {
+                          "type": "integer",
+                          "format": "int32"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{publicCompanyId}/drivers/{publicDriverId}/earnings": {
+      "get": {
+        "tags": [
+          "partnerpublicgatewayservice"
+        ],
+        "operationId": "getDriverEarnings",
+        "parameters": [
+          {
+            "name": "publicCompanyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "publicDriverId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "driverId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "grossValues",
+                    "metadata",
+                    "netValues"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "grossValues": {
+                      "required": [
+                        "airportFees",
+                        "cancellations",
+                        "cityFees",
+                        "commission",
+                        "commissionCharged",
+                        "commissionRefunded",
+                        "hotelFees",
+                        "incentives",
+                        "other",
+                        "tips",
+                        "tolls",
+                        "totalAfterCommission",
+                        "totalBeforeCommission",
+                        "totalFreeNowBalance",
+                        "tours",
+                        "waitingTime"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "tours": {
+                          "required": [
+                            "metered",
+                            "nonAppPayments",
+                            "nonMetered",
+                            "numberOfTours",
+                            "paidByApp",
+                            "total",
+                            "tripAdjustment"
+                          ],
+                          "type": "object",
+                          "properties": {
+                            "paidByApp": {
+                              "type": "number"
+                            },
+                            "nonAppPayments": {
+                              "type": "number"
+                            },
+                            "metered": {
+                              "type": "number"
+                            },
+                            "nonMetered": {
+                              "type": "number"
+                            },
+                            "tripAdjustment": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "numberOfTours": {
+                              "type": "integer",
+                              "format": "int64"
+                            }
+                          }
+                        },
+                        "incentives": {
+                          "type": "number"
+                        },
+                        "tolls": {
+                          "type": "number"
+                        },
+                        "tips": {
+                          "type": "number"
+                        },
+                        "cancellations": {
+                          "type": "number"
+                        },
+                        "waitingTime": {
+                          "type": "number"
+                        },
+                        "cityFees": {
+                          "type": "number"
+                        },
+                        "airportFees": {
+                          "type": "number"
+                        },
+                        "hotelFees": {
+                          "type": "number"
+                        },
+                        "other": {
+                          "type": "number"
+                        },
+                        "totalBeforeCommission": {
+                          "type": "number"
+                        },
+                        "commission": {
+                          "type": "number"
+                        },
+                        "commissionCharged": {
+                          "type": "number"
+                        },
+                        "commissionRefunded": {
+                          "type": "number"
+                        },
+                        "totalAfterCommission": {
+                          "type": "number"
+                        },
+                        "totalFreeNowBalance": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "netValues": {
+                      "required": [
+                        "airportFees",
+                        "cancellations",
+                        "cityFees",
+                        "commission",
+                        "commissionCharged",
+                        "commissionRefunded",
+                        "hotelFees",
+                        "incentives",
+                        "other",
+                        "tips",
+                        "tolls",
+                        "totalAfterCommission",
+                        "totalBeforeCommission",
+                        "totalFreeNowBalance",
+                        "tours",
+                        "waitingTime"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "tours": {
+                          "required": [
+                            "metered",
+                            "nonAppPayments",
+                            "nonMetered",
+                            "numberOfTours",
+                            "paidByApp",
+                            "total",
+                            "tripAdjustment"
+                          ],
+                          "type": "object",
+                          "properties": {
+                            "paidByApp": {
+                              "type": "number"
+                            },
+                            "nonAppPayments": {
+                              "type": "number"
+                            },
+                            "metered": {
+                              "type": "number"
+                            },
+                            "nonMetered": {
+                              "type": "number"
+                            },
+                            "tripAdjustment": {
+                              "type": "number"
+                            },
+                            "total": {
+                              "type": "number"
+                            },
+                            "numberOfTours": {
+                              "type": "integer",
+                              "format": "int64"
+                            }
+                          }
+                        },
+                        "incentives": {
+                          "type": "number"
+                        },
+                        "tolls": {
+                          "type": "number"
+                        },
+                        "tips": {
+                          "type": "number"
+                        },
+                        "cancellations": {
+                          "type": "number"
+                        },
+                        "waitingTime": {
+                          "type": "number"
+                        },
+                        "cityFees": {
+                          "type": "number"
+                        },
+                        "airportFees": {
+                          "type": "number"
+                        },
+                        "hotelFees": {
+                          "type": "number"
+                        },
+                        "other": {
+                          "type": "number"
+                        },
+                        "totalBeforeCommission": {
+                          "type": "number"
+                        },
+                        "commission": {
+                          "type": "number"
+                        },
+                        "commissionCharged": {
+                          "type": "number"
+                        },
+                        "commissionRefunded": {
+                          "type": "number"
+                        },
+                        "totalAfterCommission": {
+                          "type": "number"
+                        },
+                        "totalFreeNowBalance": {
+                          "type": "number"
+                        }
+                      }
+                    },
+                    "metadata": {
+                      "required": [
+                        "currency",
+                        "endDate",
+                        "startDate"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "currency": {
+                          "type": "string"
+                        },
+                        "startDate": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "endDate": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/companies/{publicCompanyId}/bookings": {
+      "get": {
+        "tags": [
+          "partnerpublicgatewayservice"
+        ],
+        "operationId": "getCompanyBookings",
+        "parameters": [
+          {
+            "name": "publicCompanyId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 0
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          },
+          {
+            "name": "companyId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "required": [
+                    "content",
+                    "metadata"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "content": {
+                      "type": "array",
+                      "items": {
+                        "required": [
+                          "id"
+                        ],
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "pickupDate": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "pickupLocation": {
+                            "type": "object",
+                            "properties": {
+                              "streetName": {
+                                "type": "string"
+                              },
+                              "streetNumber": {
+                                "type": "string"
+                              },
+                              "cityName": {
+                                "type": "string"
+                              },
+                              "cityCode": {
+                                "type": "string"
+                              },
+                              "countryName": {
+                                "type": "string"
+                              },
+                              "countryCode": {
+                                "type": "string"
+                              },
+                              "quarterName": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "dropoffDate": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "dropoffLocation": {
+                            "type": "object",
+                            "properties": {
+                              "streetName": {
+                                "type": "string"
+                              },
+                              "streetNumber": {
+                                "type": "string"
+                              },
+                              "cityName": {
+                                "type": "string"
+                              },
+                              "cityCode": {
+                                "type": "string"
+                              },
+                              "countryName": {
+                                "type": "string"
+                              },
+                              "countryCode": {
+                                "type": "string"
+                              },
+                              "quarterName": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "hailingType": {
+                            "type": "string"
+                          },
+                          "driver": {
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            }
+                          },
+                          "tourValue": {
+                            "type": "object",
+                            "properties": {
+                              "amount": {
+                                "type": "number",
+                                "format": "double"
+                              },
+                              "tip": {
+                                "type": "number",
+                                "format": "double"
+                              },
+                              "currency": {
+                                "type": "string"
+                              },
+                              "toll": {
+                                "type": "number",
+                                "format": "double"
+                              },
+                              "taxPercentage": {
+                                "type": "integer",
+                                "format": "int32"
+                              },
+                              "comparisonBaseFare": {
+                                "type": "number",
+                                "format": "double"
+                              }
+                            }
+                          },
+                          "state": {
+                            "type": "string",
+                            "enum": [
+                              "OFFER",
+                              "ACCEPTED",
+                              "APPROACH",
+                              "ARRIVAL",
+                              "CARRYING",
+                              "PAYING",
+                              "ACCOMPLISHED",
+                              "CANCELED"
+                            ]
+                          },
+                          "routeDuration": {
+                            "type": "integer",
+                            "format": "int64"
+                          },
+                          "routeDistance": {
+                            "type": "integer",
+                            "format": "int64"
+                          },
+                          "subFleetTypeLabel": {
+                            "type": "string"
+                          },
+                          "paymentMethod": {
+                            "type": "string",
+                            "enum": [
+                              "APP",
+                              "CASH"
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    "metadata": {
+                      "required": [
+                        "page",
+                        "pageSize",
+                        "totalElements",
+                        "totalPages"
+                      ],
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "pageSize": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "format": "int32"
+                        },
+                        "totalElements": {
+                          "type": "integer",
+                          "format": "int32"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "Pageable": {
+        "type": "object",
+        "properties": {
+          "page": {
+            "minimum": 0,
+            "type": "integer",
+            "format": "int32"
+          },
+          "size": {
+            "minimum": 1,
+            "type": "integer",
+            "format": "int32"
+          },
+          "sort": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "CompanyLinkResponseDTO": {
+        "required": [
+          "companyName",
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "companyName": {
+            "type": "string"
+          }
+        }
+      },
+      "Metadata": {
+        "required": [
+          "page",
+          "pageSize",
+          "totalElements",
+          "totalPages"
+        ],
+        "type": "object",
+        "properties": {
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalPages": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalElements": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "PaginatedResponseDtoCompanyLinkResponseDTO": {
+        "required": [
+          "content",
+          "metadata"
+        ],
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "required": [
+                "companyName",
+                "id"
+              ],
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "companyName": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "required": [
+              "page",
+              "pageSize",
+              "totalElements",
+              "totalPages"
+            ],
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "pageSize": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "totalPages": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "totalElements": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        }
+      },
+      "EarningsBreakdownDto": {
+        "required": [
+          "airportFees",
+          "cancellations",
+          "cityFees",
+          "commission",
+          "commissionCharged",
+          "commissionRefunded",
+          "hotelFees",
+          "incentives",
+          "other",
+          "tips",
+          "tolls",
+          "totalAfterCommission",
+          "totalBeforeCommission",
+          "totalFreeNowBalance",
+          "tours",
+          "waitingTime"
+        ],
+        "type": "object",
+        "properties": {
+          "tours": {
+            "required": [
+              "metered",
+              "nonAppPayments",
+              "nonMetered",
+              "numberOfTours",
+              "paidByApp",
+              "total",
+              "tripAdjustment"
+            ],
+            "type": "object",
+            "properties": {
+              "paidByApp": {
+                "type": "number"
+              },
+              "nonAppPayments": {
+                "type": "number"
+              },
+              "metered": {
+                "type": "number"
+              },
+              "nonMetered": {
+                "type": "number"
+              },
+              "tripAdjustment": {
+                "type": "number"
+              },
+              "total": {
+                "type": "number"
+              },
+              "numberOfTours": {
+                "type": "integer",
+                "format": "int64"
+              }
+            }
+          },
+          "incentives": {
+            "type": "number"
+          },
+          "tolls": {
+            "type": "number"
+          },
+          "tips": {
+            "type": "number"
+          },
+          "cancellations": {
+            "type": "number"
+          },
+          "waitingTime": {
+            "type": "number"
+          },
+          "cityFees": {
+            "type": "number"
+          },
+          "airportFees": {
+            "type": "number"
+          },
+          "hotelFees": {
+            "type": "number"
+          },
+          "other": {
+            "type": "number"
+          },
+          "totalBeforeCommission": {
+            "type": "number"
+          },
+          "commission": {
+            "type": "number"
+          },
+          "commissionCharged": {
+            "type": "number"
+          },
+          "commissionRefunded": {
+            "type": "number"
+          },
+          "totalAfterCommission": {
+            "type": "number"
+          },
+          "totalFreeNowBalance": {
+            "type": "number"
+          }
+        }
+      },
+      "EarningsBreakdownMetadataDto": {
+        "required": [
+          "currency",
+          "endDate",
+          "startDate"
+        ],
+        "type": "object",
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "startDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endDate": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "EarningsToursDto": {
+        "required": [
+          "metered",
+          "nonAppPayments",
+          "nonMetered",
+          "numberOfTours",
+          "paidByApp",
+          "total",
+          "tripAdjustment"
+        ],
+        "type": "object",
+        "properties": {
+          "paidByApp": {
+            "type": "number"
+          },
+          "nonAppPayments": {
+            "type": "number"
+          },
+          "metered": {
+            "type": "number"
+          },
+          "nonMetered": {
+            "type": "number"
+          },
+          "tripAdjustment": {
+            "type": "number"
+          },
+          "total": {
+            "type": "number"
+          },
+          "numberOfTours": {
+            "type": "integer",
+            "format": "int64"
+          }
+        }
+      },
+      "PublicEarningsResponseDto": {
+        "required": [
+          "grossValues",
+          "metadata",
+          "netValues"
+        ],
+        "type": "object",
+        "properties": {
+          "grossValues": {
+            "required": [
+              "airportFees",
+              "cancellations",
+              "cityFees",
+              "commission",
+              "commissionCharged",
+              "commissionRefunded",
+              "hotelFees",
+              "incentives",
+              "other",
+              "tips",
+              "tolls",
+              "totalAfterCommission",
+              "totalBeforeCommission",
+              "totalFreeNowBalance",
+              "tours",
+              "waitingTime"
+            ],
+            "type": "object",
+            "properties": {
+              "tours": {
+                "required": [
+                  "metered",
+                  "nonAppPayments",
+                  "nonMetered",
+                  "numberOfTours",
+                  "paidByApp",
+                  "total",
+                  "tripAdjustment"
+                ],
+                "type": "object",
+                "properties": {
+                  "paidByApp": {
+                    "type": "number"
+                  },
+                  "nonAppPayments": {
+                    "type": "number"
+                  },
+                  "metered": {
+                    "type": "number"
+                  },
+                  "nonMetered": {
+                    "type": "number"
+                  },
+                  "tripAdjustment": {
+                    "type": "number"
+                  },
+                  "total": {
+                    "type": "number"
+                  },
+                  "numberOfTours": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                }
+              },
+              "incentives": {
+                "type": "number"
+              },
+              "tolls": {
+                "type": "number"
+              },
+              "tips": {
+                "type": "number"
+              },
+              "cancellations": {
+                "type": "number"
+              },
+              "waitingTime": {
+                "type": "number"
+              },
+              "cityFees": {
+                "type": "number"
+              },
+              "airportFees": {
+                "type": "number"
+              },
+              "hotelFees": {
+                "type": "number"
+              },
+              "other": {
+                "type": "number"
+              },
+              "totalBeforeCommission": {
+                "type": "number"
+              },
+              "commission": {
+                "type": "number"
+              },
+              "commissionCharged": {
+                "type": "number"
+              },
+              "commissionRefunded": {
+                "type": "number"
+              },
+              "totalAfterCommission": {
+                "type": "number"
+              },
+              "totalFreeNowBalance": {
+                "type": "number"
+              }
+            }
+          },
+          "netValues": {
+            "required": [
+              "airportFees",
+              "cancellations",
+              "cityFees",
+              "commission",
+              "commissionCharged",
+              "commissionRefunded",
+              "hotelFees",
+              "incentives",
+              "other",
+              "tips",
+              "tolls",
+              "totalAfterCommission",
+              "totalBeforeCommission",
+              "totalFreeNowBalance",
+              "tours",
+              "waitingTime"
+            ],
+            "type": "object",
+            "properties": {
+              "tours": {
+                "required": [
+                  "metered",
+                  "nonAppPayments",
+                  "nonMetered",
+                  "numberOfTours",
+                  "paidByApp",
+                  "total",
+                  "tripAdjustment"
+                ],
+                "type": "object",
+                "properties": {
+                  "paidByApp": {
+                    "type": "number"
+                  },
+                  "nonAppPayments": {
+                    "type": "number"
+                  },
+                  "metered": {
+                    "type": "number"
+                  },
+                  "nonMetered": {
+                    "type": "number"
+                  },
+                  "tripAdjustment": {
+                    "type": "number"
+                  },
+                  "total": {
+                    "type": "number"
+                  },
+                  "numberOfTours": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                }
+              },
+              "incentives": {
+                "type": "number"
+              },
+              "tolls": {
+                "type": "number"
+              },
+              "tips": {
+                "type": "number"
+              },
+              "cancellations": {
+                "type": "number"
+              },
+              "waitingTime": {
+                "type": "number"
+              },
+              "cityFees": {
+                "type": "number"
+              },
+              "airportFees": {
+                "type": "number"
+              },
+              "hotelFees": {
+                "type": "number"
+              },
+              "other": {
+                "type": "number"
+              },
+              "totalBeforeCommission": {
+                "type": "number"
+              },
+              "commission": {
+                "type": "number"
+              },
+              "commissionCharged": {
+                "type": "number"
+              },
+              "commissionRefunded": {
+                "type": "number"
+              },
+              "totalAfterCommission": {
+                "type": "number"
+              },
+              "totalFreeNowBalance": {
+                "type": "number"
+              }
+            }
+          },
+          "metadata": {
+            "required": [
+              "currency",
+              "endDate",
+              "startDate"
+            ],
+            "type": "object",
+            "properties": {
+              "currency": {
+                "type": "string"
+              },
+              "startDate": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "endDate": {
+                "type": "string",
+                "format": "date-time"
+              }
+            }
+          }
+        }
+      },
+      "DriverResponseDto": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        }
+      },
+      "PaginatedResponseDtoDriverResponseDto": {
+        "required": [
+          "content",
+          "metadata"
+        ],
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "required": [
+                "id",
+                "name"
+              ],
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "name": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "metadata": {
+            "required": [
+              "page",
+              "pageSize",
+              "totalElements",
+              "totalPages"
+            ],
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "pageSize": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "totalPages": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "totalElements": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        }
+      },
+      "BookingResponseDto": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "pickupDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "pickupLocation": {
+            "type": "object",
+            "properties": {
+              "streetName": {
+                "type": "string"
+              },
+              "streetNumber": {
+                "type": "string"
+              },
+              "cityName": {
+                "type": "string"
+              },
+              "cityCode": {
+                "type": "string"
+              },
+              "countryName": {
+                "type": "string"
+              },
+              "countryCode": {
+                "type": "string"
+              },
+              "quarterName": {
+                "type": "string"
+              }
+            }
+          },
+          "dropoffDate": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "dropoffLocation": {
+            "type": "object",
+            "properties": {
+              "streetName": {
+                "type": "string"
+              },
+              "streetNumber": {
+                "type": "string"
+              },
+              "cityName": {
+                "type": "string"
+              },
+              "cityCode": {
+                "type": "string"
+              },
+              "countryName": {
+                "type": "string"
+              },
+              "countryCode": {
+                "type": "string"
+              },
+              "quarterName": {
+                "type": "string"
+              }
+            }
+          },
+          "hailingType": {
+            "type": "string"
+          },
+          "driver": {
+            "required": [
+              "id",
+              "name"
+            ],
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "name": {
+                "type": "string"
+              }
+            }
+          },
+          "tourValue": {
+            "type": "object",
+            "properties": {
+              "amount": {
+                "type": "number",
+                "format": "double"
+              },
+              "tip": {
+                "type": "number",
+                "format": "double"
+              },
+              "currency": {
+                "type": "string"
+              },
+              "toll": {
+                "type": "number",
+                "format": "double"
+              },
+              "taxPercentage": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "comparisonBaseFare": {
+                "type": "number",
+                "format": "double"
+              }
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "OFFER",
+              "ACCEPTED",
+              "APPROACH",
+              "ARRIVAL",
+              "CARRYING",
+              "PAYING",
+              "ACCOMPLISHED",
+              "CANCELED"
+            ]
+          },
+          "routeDuration": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "routeDistance": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "subFleetTypeLabel": {
+            "type": "string"
+          },
+          "paymentMethod": {
+            "type": "string",
+            "enum": [
+              "APP",
+              "CASH"
+            ]
+          }
+        }
+      },
+      "LocationInfoResponseDto": {
+        "type": "object",
+        "properties": {
+          "streetName": {
+            "type": "string"
+          },
+          "streetNumber": {
+            "type": "string"
+          },
+          "cityName": {
+            "type": "string"
+          },
+          "cityCode": {
+            "type": "string"
+          },
+          "countryName": {
+            "type": "string"
+          },
+          "countryCode": {
+            "type": "string"
+          },
+          "quarterName": {
+            "type": "string"
+          }
+        }
+      },
+      "PaginatedResponseDtoBookingResponseDto": {
+        "required": [
+          "content",
+          "metadata"
+        ],
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "array",
+            "items": {
+              "required": [
+                "id"
+              ],
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string"
+                },
+                "pickupDate": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "pickupLocation": {
+                  "type": "object",
+                  "properties": {
+                    "streetName": {
+                      "type": "string"
+                    },
+                    "streetNumber": {
+                      "type": "string"
+                    },
+                    "cityName": {
+                      "type": "string"
+                    },
+                    "cityCode": {
+                      "type": "string"
+                    },
+                    "countryName": {
+                      "type": "string"
+                    },
+                    "countryCode": {
+                      "type": "string"
+                    },
+                    "quarterName": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "dropoffDate": {
+                  "type": "string",
+                  "format": "date-time"
+                },
+                "dropoffLocation": {
+                  "type": "object",
+                  "properties": {
+                    "streetName": {
+                      "type": "string"
+                    },
+                    "streetNumber": {
+                      "type": "string"
+                    },
+                    "cityName": {
+                      "type": "string"
+                    },
+                    "cityCode": {
+                      "type": "string"
+                    },
+                    "countryName": {
+                      "type": "string"
+                    },
+                    "countryCode": {
+                      "type": "string"
+                    },
+                    "quarterName": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "hailingType": {
+                  "type": "string"
+                },
+                "driver": {
+                  "required": [
+                    "id",
+                    "name"
+                  ],
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "tourValue": {
+                  "type": "object",
+                  "properties": {
+                    "amount": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "tip": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "currency": {
+                      "type": "string"
+                    },
+                    "toll": {
+                      "type": "number",
+                      "format": "double"
+                    },
+                    "taxPercentage": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "comparisonBaseFare": {
+                      "type": "number",
+                      "format": "double"
+                    }
+                  }
+                },
+                "state": {
+                  "type": "string",
+                  "enum": [
+                    "OFFER",
+                    "ACCEPTED",
+                    "APPROACH",
+                    "ARRIVAL",
+                    "CARRYING",
+                    "PAYING",
+                    "ACCOMPLISHED",
+                    "CANCELED"
+                  ]
+                },
+                "routeDuration": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "routeDistance": {
+                  "type": "integer",
+                  "format": "int64"
+                },
+                "subFleetTypeLabel": {
+                  "type": "string"
+                },
+                "paymentMethod": {
+                  "type": "string",
+                  "enum": [
+                    "APP",
+                    "CASH"
+                  ]
+                }
+              }
+            }
+          },
+          "metadata": {
+            "required": [
+              "page",
+              "pageSize",
+              "totalElements",
+              "totalPages"
+            ],
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "pageSize": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "totalPages": {
+                "type": "integer",
+                "format": "int32"
+              },
+              "totalElements": {
+                "type": "integer",
+                "format": "int32"
+              }
+            }
+          }
+        }
+      },
+      "TourValueInfoResponseDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "format": "double"
+          },
+          "tip": {
+            "type": "number",
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "toll": {
+            "type": "number",
+            "format": "double"
+          },
+          "taxPercentage": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comparisonBaseFare": {
+            "type": "number",
+            "format": "double"
+          }
+        }
+      }
+    }
+  }
+}

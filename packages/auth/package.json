@@ -1,0 +1,141 @@
+{
+  "name": "@fleethub/auth",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./cookie": {
+      "types": "./src/cookie.ts",
+      "default": "./src/cookie.ts"
+    },
+    "./secret": {
+      "types": "./src/secret.ts",
+      "default": "./src/secret.ts"
+    },
+    "./constants": {
+      "types": "./src/constants.ts",
+      "default": "./src/constants.ts"
+    },
+    "./tenant-scope": {
+      "types": "./src/tenant-scope.ts",
+      "default": "./src/tenant-scope.ts"
+    },
+    "./company-scope-cookie": {
+      "types": "./src/company-scope-cookie.ts",
+      "default": "./src/company-scope-cookie.ts"
+    },
+    "./company-fleet-scope": {
+      "types": "./src/company-fleet-scope.ts",
+      "default": "./src/company-fleet-scope.ts"
+    },
+    "./rbac": {
+      "types": "./src/rbac.ts",
+      "default": "./src/rbac.ts"
+    },
+    "./driver-productivity": {
+      "types": "./src/driver-productivity.ts",
+      "default": "./src/driver-productivity.ts"
+    },
+    "./driver-connection-metadata": {
+      "types": "./src/driver-connection-metadata.ts",
+      "default": "./src/driver-connection-metadata.ts"
+    },
+    "./sync-trigger": {
+      "types": "./src/sync-trigger.ts",
+      "default": "./src/sync-trigger.ts"
+    },
+    "./ingest-source": {
+      "types": "./src/ingest-source.ts",
+      "default": "./src/ingest-source.ts"
+    },
+    "./ingestion-events": {
+      "types": "./src/ingestion-events.ts",
+      "default": "./src/ingestion-events.ts"
+    },
+    "./display-timezone": {
+      "types": "./src/display-timezone.ts",
+      "default": "./src/display-timezone.ts"
+    },
+    "./day-metrics": {
+      "types": "./src/day-metrics.ts",
+      "default": "./src/day-metrics.ts"
+    },
+    "./apps-productivity": {
+      "types": "./src/apps-productivity.ts",
+      "default": "./src/apps-productivity.ts"
+    },
+    "./analytics-sector-types": {
+      "types": "./src/analytics-sector-types.ts",
+      "default": "./src/analytics-sector-types.ts"
+    },
+    "./shift-liquidation": {
+      "types": "./src/shift-liquidation.ts",
+      "default": "./src/shift-liquidation.ts"
+    },
+    "./company-economic-defaults": {
+      "types": "./src/company-economic-defaults.ts",
+      "default": "./src/company-economic-defaults.ts"
+    },
+    "./trip-payment-amounts": {
+      "types": "./src/trip-payment-amounts.ts",
+      "default": "./src/trip-payment-amounts.ts"
+    },
+    "./trip-payment-buckets": {
+      "types": "./src/trip-payment-buckets.ts",
+      "default": "./src/trip-payment-buckets.ts"
+    },
+    "./tenant-trip-export": {
+      "types": "./src/tenant-trip-export.ts",
+      "default": "./src/tenant-trip-export.ts"
+    },
+    "./shift-activity-types": {
+      "types": "./src/shift-activity-types.ts",
+      "default": "./src/shift-activity-types.ts"
+    },
+    "./shift-activity": {
+      "types": "./src/shift-activity.ts",
+      "default": "./src/shift-activity.ts"
+    },
+    "./eur-per-hour": {
+      "types": "./src/eur-per-hour.ts",
+      "default": "./src/eur-per-hour.ts"
+    },
+    "./tenant-analytics-settings": {
+      "types": "./src/tenant-analytics-settings.ts",
+      "default": "./src/tenant-analytics-settings.ts"
+    },
+    "./group-tenant-company-map": {
+      "types": "./src/group-tenant-company-map.ts",
+      "default": "./src/group-tenant-company-map.ts"
+    },
+    "./user-locale": {
+      "types": "./src/user-locale.ts",
+      "default": "./src/user-locale.ts"
+    },
+    "./guest-locale-cookie": {
+      "types": "./src/guest-locale-cookie.ts",
+      "default": "./src/guest-locale-cookie.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "npx tsx --test src/rbac.test.ts src/mfa-policy.test.ts src/trip-payment-buckets.test.ts src/trip-payment-amounts.test.ts src/shift-liquidation.test.ts src/company-economic-defaults.test.ts src/company-fleet-scope.test.ts src/shift-activity.test.ts src/ingestion-events.test.ts src/display-timezone.test.ts src/auto-poll-health.test.ts src/company-scope-cookie.test.ts"
+  },
+  "dependencies": {
+    "@fleethub/contracts": "*",
+    "@fleethub/db": "*",
+    "bcryptjs": "^3.0.2",
+    "jose": "^6.0.11",
+    "nodemailer": "^7.0.3",
+    "otplib": "^12.0.1",
+    "zod": "^3.24.4"
+  },
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.17",
+    "typescript": "^5.8.3"
+  }
+}

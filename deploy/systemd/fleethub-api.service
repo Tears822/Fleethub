@@ -1,0 +1,23 @@
+[Unit]
+Description=FleetHub API (@fleethub/server)
+Documentation=https://github.com/fleethub
+After=network-online.target fleethub-docker.service
+Wants=fleethub-docker.service
+PartOf=fleethub.target
+
+[Service]
+Type=simple
+User=%FLEETHUB_USER%
+Group=%FLEETHUB_GROUP%
+WorkingDirectory=%FLEETHUB_ROOT%
+Environment=NODE_ENV=production
+Environment=NODE_OPTIONS=--max-http-header-size=65536
+EnvironmentFile=-%FLEETHUB_ROOT%/.env
+EnvironmentFile=-%FLEETHUB_ROOT%/apps/server/.env
+ExecStart=%NPM_BIN% run start:server
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=fleethub.target

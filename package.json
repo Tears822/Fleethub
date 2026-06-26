@@ -1,0 +1,14 @@
+{
+  "name": "fleethub",
+  "private": true,
+  "workspaces": ["apps/*", "packages/*"],
+  "scripts": {
+    "worker": "npm run fleet -w @fleethub/worker",
+    "start:server": "npm run start -w @fleethub/server",
+    "start:web": "npm run start -w @fleethub/web",
+    "build": "npm run build -w @fleethub/web && npm run build -w @fleethub/server"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "name": "@fleethub/db",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./bullmq-queue-stats": {
+      "types": "./src/bullmq-queue-stats.ts",
+      "default": "./src/bullmq-queue-stats.ts"
+    }
+  },
+  "scripts": {
+    "generate": "prisma generate",
+    "migrate": "prisma migrate deploy",
+    "migrate:dev": "prisma migrate dev",
+    "db:push": "prisma db push",
+    "apply-rls": "prisma db execute --file prisma/sql/apply-rls.sql --schema prisma/schema.prisma",
+    "create-app-role": "prisma db execute --file prisma/sql/create-app-role.sql --schema prisma/schema.prisma",
+    "studio": "prisma studio",
+    "seed": "npx tsx prisma/seed.ts",
+    "clear:demo-a": "npx tsx prisma/clear-demo-a.ts",
+    "reset-superadmin-2fa": "npx tsx prisma/reset-superadmin-2fa.ts",
+    "test:tenant": "npx tsx prisma/test-tenant-isolation.ts",
+    "test:tenant:rls": "DATABASE_URL=postgresql://fleethub_app:fleethub_app@localhost:5432/fleethub?schema=public npx tsx prisma/test-tenant-isolation.ts"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.8.2",
+    "bcryptjs": "^3.0.2"
+  },
+  "devDependencies": {
+    "dotenv": "^16.5.0",
+    "prisma": "^6.8.2",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  }
+}

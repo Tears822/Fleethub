@@ -1,0 +1,23 @@
+{
+  "name": "@fleethub/i18n",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "default": "./src/index.ts"
+    },
+    "./locales/es.json": "./locales/es.json",
+    "./locales/ca.json": "./locales/ca.json"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "export:csv": "tsx src/export-csv.ts",
+    "i18n:export": "npm run export:csv -w @fleethub/i18n"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  }
+}

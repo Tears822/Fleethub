@@ -1,0 +1,22 @@
+[Unit]
+Description=FleetHub Worker (BullMQ fleet sync, webhooks, rollups)
+Documentation=https://github.com/fleethub
+After=network-online.target fleethub-docker.service
+Wants=fleethub-docker.service
+PartOf=fleethub.target
+
+[Service]
+Type=simple
+User=%FLEETHUB_USER%
+Group=%FLEETHUB_GROUP%
+WorkingDirectory=%FLEETHUB_ROOT%
+Environment=NODE_ENV=production
+Environment=WORKER_MODE=fleet
+EnvironmentFile=-%FLEETHUB_ROOT%/.env
+ExecStart=%NPM_BIN% run worker
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=30
+
+[Install]
+WantedBy=fleethub.target

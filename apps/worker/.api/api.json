@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "apis": [
+    {
+      "identifier": "freenow",
+      "source": "@freenow/v1.0#41ioc10mn7ma1un",
+      "integrity": "sha512-JFJySlRV650uqdmuUFgWY9PXIfn98J2Z1UHgSCmpTWF5OPuZULax5dWbAGc1/vX/SPhErft7VtCg1RPfFA074Q==",
+      "installerVersion": "6.1.3"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+[Unit]
+Description=FleetHub production stack (Docker + API + Web + Worker)
+Documentation=https://github.com/fleethub
+Wants=fleethub-docker.service fleethub-api.service fleethub-web.service fleethub-worker.service
+After=fleethub-docker.service fleethub-api.service fleethub-web.service fleethub-worker.service
+
+[Install]
+WantedBy=multi-user.target
