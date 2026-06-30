@@ -7,19 +7,14 @@ import {
   type PlatformBlock,
   type RowDetail,
 } from "@/features/shifts/lib/cerrar-turnos-mock-detail";
-import {
-  mapTripsToRowDetail,
-  type ApiShiftTrip,
-} from "@/features/shifts/lib/shift-trip-detail-mapper";
-import { buildShiftTripsQueryParams } from "@/features/shifts/lib/shift-trips-query";
+import { fetchShiftTripsDetail } from "@/features/shifts/lib/fetch-shift-trips-detail";
+import { mapTripsToRowDetail } from "@/features/shifts/lib/shift-trip-detail-mapper";
 import type {
   CerrarTurnosRow,
   ShiftLiveDetailInput,
   ShiftPlatformName,
   ShiftTableRow,
 } from "@/features/shifts/ui/cerrar-turnos-types";
-import type { ShiftActivityDto } from "@fleethub/auth/shift-activity";
-import { buildApiUrl } from "@/shared/lib/api-url";
 
 export type { ShiftLiveDetailInput };
 
@@ -29,32 +24,7 @@ async function fetchTripDetail(
   filterPlatform?: ShiftPlatformName,
   signal?: AbortSignal,
 ): Promise<RowDetail> {
-  const params = buildShiftTripsQueryParams({
-    liquidationStatus: live.liquidationStatus,
-    driverId: live.driverId,
-    tripIds: live.tripIds,
-    filterPlatformName: filterPlatform,
-  });
-  if (!params) {
-    throw new Error("Demasiados viajes para cargar en una sola petición. Use cerrar por franja.");
-  }
-
-  const res = await fetch(buildApiUrl(`/api/tenant/shifts/trips?${params}`), {
-    credentials: "include",
-    signal,
-  });
-  const data = (await res.json()) as {
-    error?: string;
-    trips?: ApiShiftTrip[];
-    activity?: ShiftActivityDto | null;
-  };
-  if (!res.ok) {
-    throw new Error(data.error ?? "No se pudieron cargar los viajes del turno.");
-  }
-  if (!data.trips?.length) {
-    throw new Error("No hay viajes para mostrar en este detalle.");
-  }
-
+  const data = await fetchShiftTripsDetail(live, filterPlatform, signal);
   const fechaLabel = rowRango.includes("–")
     ? rowRango.split("–").pop()?.trim() ?? rowRango
     : rowRango;

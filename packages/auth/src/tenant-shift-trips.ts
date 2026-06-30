@@ -77,11 +77,16 @@ export async function listShiftTripsForDetail(
     : [];
   const status = query.liquidationStatus?.trim() || undefined;
 
-  const MAX_TRIP_IDS_IN_QUERY = 80;
+  const MAX_TRIP_IDS_IN_GET = 80;
+  const MAX_TRIP_IDS_IN_BODY = 5000;
   const effectiveTripIds =
-    driverId && status === "pending" && tripIds.length > MAX_TRIP_IDS_IN_QUERY
+    driverId && status === "pending" && tripIds.length > MAX_TRIP_IDS_IN_GET
       ? []
       : tripIds;
+
+  if (effectiveTripIds.length > MAX_TRIP_IDS_IN_BODY) {
+    return err({ message: "Demasiados viajes en una sola petición." });
+  }
 
   if (!driverId && effectiveTripIds.length === 0) {
     return err({ message: "Indica el conductor o los viajes." });

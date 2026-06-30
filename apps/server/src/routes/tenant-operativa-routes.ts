@@ -66,9 +66,41 @@ async function sendLiquidationPdf(
 }
 
 export async function registerTenantOperativaRoutes(app: FastifyInstance) {
+  async function handleShiftTripsDetail(
+    request: { headers: { cookie?: string }; log: { error: (obj: unknown, msg: string) => void } },
+    reply: import("fastify").FastifyReply,
+    input: {
+      driverId?: string;
+      tripIds?: string[];
+      status?: string;
+      platform?: string;
+      includeActivity?: boolean;
+    },
+    session: Awaited<ReturnType<typeof readSession>>,
+  ) {
+    const tenantSession = requireTenantSession(session);
+    const companyScope = await resolveCompanyScopeWithCookieForRequest(
+      tenantSession,
+      request.headers.cookie,
+    );
+    const result = await listShiftTripsForDetail(
+      tenantSession,
+      {
+        driverId: input.driverId,
+        tripIds: input.tripIds,
+        liquidationStatus: input.status,
+        platform: input.platform,
+        includeActivity: input.includeActivity !== false,
+      },
+      { companyScope },
+    );
+    if (!result.ok) return reply.status(400).send({ error: result.error.message });
+    return reply.send(result.value);
+  }
+
   app.get("/api/tenant/shifts/trips", async (request, reply) => {
     try {
-      const session = requireTenantSession(await readSession(request));
+      const session = await readSession(request);
       const q = request.query as {
         driverId?: string;
         tripIds?: string;
@@ -79,22 +111,54 @@ export async function registerTenantOperativaRoutes(app: FastifyInstance) {
       const tripIds = q.tripIds
         ? q.tripIds.split(",").map((id) => id.trim()).filter(Boolean)
         : undefined;
-      const companyScope = await resolveCompanyScopeWithCookieForRequest(
+      return await handleShiftTripsDetail(
+        request,
+        reply,
+        {
+          driverId: q.driverId,
+          tripIds,
+          status: q.status,
+          platform: q.platform,
+          includeActivity: q.includeActivity !== "0" && q.includeActivity !== "false",
+        },
         session,
-        request.headers.cookie,
       );
-      const result = await listShiftTripsForDetail(session, {
-        driverId: q.driverId,
-        tripIds,
-        liquidationStatus: q.status,
-        platform: q.platform,
-        includeActivity:
-          q.includeActivity !== "0" && q.includeActivity !== "false",
-      }, { companyScope });
-      if (!result.ok) return reply.status(400).send({ error: result.error.message });
-      return reply.send(result.value);
     } catch (err) {
       request.log.error({ err }, "shift trips detail failed");
+      const code = err instanceof Error ? err.message : "UNKNOWN";
+      if (code === "UNAUTHORIZED" || code === "FORBIDDEN") {
+        return handleRbacError(reply, err);
+      }
+      return reply.status(500).send({
+        error: "No se pudieron cargar los viajes del turno.",
+      });
+    }
+  });
+
+  app.post("/api/tenant/shifts/trips", async (request, reply) => {
+    try {
+      const session = await readSession(request);
+      const body =
+        typeof request.body === "object" && request.body !== null
+          ? (request.body as Record<string, unknown>)
+          : {};
+      const tripIds = Array.isArray(body.tripIds)
+        ? body.tripIds.filter((id): id is string => typeof id === "string" && id.length > 0)
+        : undefined;
+      return await handleShiftTripsDetail(
+        request,
+        reply,
+        {
+          driverId: typeof body.driverId === "string" ? body.driverId : undefined,
+          tripIds,
+          status: typeof body.status === "string" ? body.status : undefined,
+          platform: typeof body.platform === "string" ? body.platform : undefined,
+          includeActivity: body.includeActivity !== false && body.includeActivity !== "false",
+        },
+        session,
+      );
+    } catch (err) {
+      request.log.error({ err }, "shift trips detail POST failed");
       const code = err instanceof Error ? err.message : "UNKNOWN";
       if (code === "UNAUTHORIZED" || code === "FORBIDDEN") {
         return handleRbacError(reply, err);

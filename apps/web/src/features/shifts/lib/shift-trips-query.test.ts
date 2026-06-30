@@ -44,7 +44,7 @@ test("buildShiftTripsQueryParams omits tripIds when platform filter scopes the b
   assert.equal(params.get("tripIds"), null);
 });
 
-test("buildShiftTripsQueryParams rejects closed batches above URL limit", () => {
+test("buildShiftTripsQueryParams omits tripIds for large closed batches (POST fallback)", () => {
   const manyIds = Array.from({ length: SHIFT_TRIPS_QUERY_TRIP_IDS_MAX + 1 }, (_, i) => `t-${i}`);
   const params = buildShiftTripsQueryParams({
     liquidationStatus: "closed",
