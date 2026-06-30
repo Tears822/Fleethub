@@ -1,4 +1,5 @@
 import type { NormalizedTripUpsert } from "@fleethub/contracts";
+import { sleepWithSyncHeartbeat } from "./sync-run-heartbeat.js";
 import { csvRowsToObjects, parseCsv } from "./uber-csv.js";
 import {
   countTripsWithAmounts,
@@ -200,7 +201,7 @@ async function waitForReportReady(
       };
     }
 
-    await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+    await sleepWithSyncHeartbeat(POLL_INTERVAL_MS);
   }
   return { ok: false, message: "Report generation timed out" };
 }
@@ -329,7 +330,7 @@ async function fetchUberReportRows(
       console.warn(
         `[uber] ${reportType} rate-limited — retry ${retryAttempt + 1}/${PAYMENTS_REPORT_MAX_RETRIES} in ${waitMs / 1000}s`,
       );
-      await new Promise((r) => setTimeout(r, waitMs));
+      await sleepWithSyncHeartbeat(waitMs);
       return fetchUberReportRows(
         orgId,
         reportType,
@@ -510,7 +511,7 @@ export async function syncUberTripsViaReports(args: {
       console.log(
         `[uber] waiting ${REPORT_RATE_LIMIT_MS / 1000}s before payments report (rate limit)…`,
       );
-      await new Promise((r) => setTimeout(r, REPORT_RATE_LIMIT_MS));
+      await sleepWithSyncHeartbeat(REPORT_RATE_LIMIT_MS);
     }
 
     if (syncPaymentsOrderReport()) {

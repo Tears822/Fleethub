@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { getSession } from "@/features/auth/server/session.service";
+import { getSuperAdminSyncAlertSummary } from "@fleethub/auth";
+import { getFleetQueuesSnapshot } from "@fleethub/db/bullmq-queue-stats";
 import {
   listAllTenantsForSuperAdmin,
   loadSuperAdminPlatformStats,
 } from "@/features/super-admin/server/tenants.queries";
 import { listAllUsersForSuperAdmin } from "@/features/super-admin/server/users.queries";
+import { SuperAdminDashboardSyncAlerts } from "@/features/super-admin/ui/super-admin-dashboard-sync-alerts";
 import {
   SuperAdminOutlineLink,
   SuperAdminPrimaryLink,
@@ -24,11 +27,13 @@ export default async function SuperAdminDashboardPage() {
   if (!session) throw new Error("Unreachable: layout guards session");
   const { t, locale } = await getSessionTranslator(session);
 
-  const [stats, tenants, users] = await Promise.all([
+  const [stats, tenants, users, queues] = await Promise.all([
     loadSuperAdminPlatformStats(),
     listAllTenantsForSuperAdmin(),
     listAllUsersForSuperAdmin(),
+    getFleetQueuesSnapshot(),
   ]);
+  const syncAlerts = await getSuperAdminSyncAlertSummary(queues.fleetSync.failed);
   const recentUsers = users.slice(0, 5);
   const dateLocale = locale === "ca" ? "ca-ES" : "es-ES";
   const today = new Date().toLocaleDateString(dateLocale);
@@ -44,6 +49,8 @@ export default async function SuperAdminDashboardPage() {
         </span>
       }
     >
+      <SuperAdminDashboardSyncAlerts session={session} alerts={syncAlerts} />
+
       <SuperAdminPlatformHero stats={stats} dateLabel={today} />
 
       <div className="flex flex-wrap gap-2">

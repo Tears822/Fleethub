@@ -43,4 +43,36 @@ describe("shift-trip-detail-mapper totals", () => {
     assert.equal(total.efectivoNum, 10);
     assert.equal((total.appNum ?? 0) + (total.efectivoNum ?? 0), 30);
   });
+
+  it("tip-only Propina (día pago) rows do not add to taxímetro total", () => {
+    const trips = [
+      trip({
+        id: "fare",
+        fareType: "Precio cerrado (T3)",
+        grossAmountCents: "1000",
+        netAmountCents: "900",
+        tipCents: "0",
+      }),
+      trip({
+        id: "tip1",
+        fareType: "Propina (día pago)",
+        grossAmountCents: null,
+        netAmountCents: "176",
+        tipCents: "176",
+      }),
+      trip({
+        id: "tip2",
+        fareType: "Propina (día pago)",
+        grossAmountCents: null,
+        netAmountCents: "200",
+        tipCents: "200",
+      }),
+    ];
+    const detail = mapTripsToRowDetail(trips, "26/06/2026", "Uber");
+    const block = detail.platforms[0]!;
+    assert.equal(block.total.taximetroNum, 0);
+    assert.equal(block.total.propinasNum, 3.76);
+    assert.equal(block.trips[1]!.taximetroNum, 0);
+    assert.equal(block.trips[2]!.taximetroNum, 0);
+  });
 });

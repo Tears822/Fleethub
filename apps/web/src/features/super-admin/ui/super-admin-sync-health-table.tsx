@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { TenantSyncHealthRow } from "@fleethub/auth";
 import type { FleetSyncQueueStats } from "@/features/super-admin/server/sync-monitor.queries";
 import { SaSortableTh } from "@/features/super-admin/ui/sa-sortable-th";
+import { SuperAdminForceSyncButton } from "@/features/super-admin/ui/super-admin-force-sync-button";
 import { useTranslations } from "@/shared/i18n/i18n-provider";
 import { compareNumbers, compareStrings, useTableSort } from "@/shared/lib/table-sort";
 
@@ -116,11 +117,17 @@ export function SuperAdminSyncHealthTable({ rows }: { rows: TenantSyncHealthRow[
               activeDir={dirFor("ultimoOk")}
               onSort={() => toggleSort("ultimoOk")}
             />
+            <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+              {t("superAdmin.sync.runningColumn")}
+            </th>
             <SaSortableTh
               label={t("superAdmin.sync.failures7dShort")}
               activeDir={dirFor("fallos")}
               onSort={() => toggleSort("fallos")}
             />
+            <th className="px-4 py-3 text-[10px] font-bold uppercase tracking-wide text-zinc-500">
+              {t("superAdmin.common.actions")}
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -144,10 +151,30 @@ export function SuperAdminSyncHealthTable({ rows }: { rows: TenantSyncHealthRow[
               <td className={`px-4 py-3 tabular-nums ${coverageClass(uberPct(r))}`}>{uberPct(r)}%</td>
               <td className={`px-4 py-3 tabular-nums ${coverageClass(fnPct(r))}`}>{fnPct(r)}%</td>
               <td className="px-4 py-3 text-zinc-700">{formatWhen(r.lastSuccessAt)}</td>
+              <td className="px-4 py-3">
+                {r.runningSyncs.length === 0 ? (
+                  <span className="text-zinc-400">—</span>
+                ) : (
+                  <ul className="space-y-0.5">
+                    {r.runningSyncs.map((s) => (
+                      <li
+                        key={`${s.platform}-${s.startedAt.toISOString()}`}
+                        className={`text-xs font-medium ${s.stale ? "text-red-700" : "text-amber-800"}`}
+                      >
+                        {s.platform} — {t("superAdmin.sync.runningMinutes", { minutes: s.minutesRunning })}
+                        {s.stale ? ` (${t("superAdmin.sync.runningStale")})` : ""}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </td>
               <td
                 className={`px-4 py-3 tabular-nums font-semibold ${r.failedLast7d > 0 ? "text-red-600" : "text-zinc-500"}`}
               >
                 {r.failedLast7d}
+              </td>
+              <td className="px-4 py-3">
+                <SuperAdminForceSyncButton tenantId={r.tenantId} compact />
               </td>
             </tr>
           ))}

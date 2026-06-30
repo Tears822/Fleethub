@@ -1,7 +1,7 @@
 import "server-only";
 
 import type { PlatformKey } from "@/features/shifts/lib/shift-platform";
-import { isT3Fare, resolveTripFeeCents } from "@fleethub/auth/shift-liquidation";
+import { isT3Fare, resolveTripFeeCents, tripTaximetroCents } from "@fleethub/auth/shift-liquidation";
 import { isCollectiblePaymentTrip } from "@fleethub/auth/trip-payment-buckets";
 import {
   resolveTripPaymentDisplayAmounts,
@@ -27,6 +27,8 @@ export type TripMoneyAgg = {
   netCents: bigint;
   /** Bruto acumulado en viajes con tarifa precio cerrado (T3). */
   t3Cents: bigint;
+  /** Bruto acumulado en viajes taxímetro (excluye T3 y líneas solo propina). */
+  taximetroCents: bigint;
   /** Viajes con tipo de pago sin confirmar (`paymentValidated = false`). */
   paymentAlertCount: number;
   tipCents: bigint;
@@ -47,6 +49,7 @@ export function emptyTripMoneyAgg(): TripMoneyAgg {
     feeCents: BigInt(0),
     netCents: BigInt(0),
     t3Cents: BigInt(0),
+    taximetroCents: BigInt(0),
     paymentAlertCount: 0,
     tipCents: BigInt(0),
     bonusCents: BigInt(0),
@@ -109,6 +112,12 @@ export function addTripToAgg(
   if (isT3Fare(trip.fareType ?? null)) {
     agg.t3Cents += gross;
   }
+  agg.taximetroCents += tripTaximetroCents({
+    fareType: trip.fareType ?? null,
+    grossAmountCents: trip.grossAmountCents,
+    netAmountCents: trip.netAmountCents,
+    tipCents: trip.tipCents,
+  });
   if (tripNeedsManualPaymentReview(trip)) {
     agg.paymentAlertCount += 1;
   }

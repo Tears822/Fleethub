@@ -1,6 +1,7 @@
 import { isCollectiblePaymentTrip } from "./trip-payment-buckets";
 import {
   resolveTripPaymentAmounts,
+  tripGrossCents,
   tripNeedsManualPaymentReview,
   tripPaymentUnbalanced,
 } from "./trip-payment-amounts";
@@ -70,7 +71,7 @@ function toNumber(cents: bigint | null | undefined): number {
   return Number(cents);
 }
 
-function tripGrossCents(t: LiquidationTripInput): number {
+function liquidationTripGrossCents(t: LiquidationTripInput): number {
   if (t.grossAmountCents != null) return toNumber(t.grossAmountCents);
   const net = toNumber(t.netAmountCents);
   const fee = toNumber(t.platformFeeCents);
@@ -79,7 +80,7 @@ function tripGrossCents(t: LiquidationTripInput): number {
 
 function tripNetCents(t: LiquidationTripInput): number {
   if (t.netAmountCents != null) return toNumber(t.netAmountCents);
-  return tripGrossCents(t) - toNumber(t.platformFeeCents);
+  return liquidationTripGrossCents(t) - toNumber(t.platformFeeCents);
 }
 
 type TripFeeFields = Pick<
@@ -119,6 +120,31 @@ export function isT3Fare(fareType: string | null): boolean {
     u.includes("PRECIO CERRADO") ||
     u === "3"
   );
+}
+
+/** Propina liquidada aparte (p. ej. Uber «día pago») — no es servicio taxímetro ni T3. */
+export function isTipOnlyFare(fareType: string | null): boolean {
+  if (!fareType?.trim()) return false;
+  return fareType.trim().toLowerCase().includes("propina");
+}
+
+export type TripTaximetroInput = {
+  fareType: string | null;
+  grossAmountCents?: bigint | null;
+  netAmountCents?: bigint | null;
+  tipCents?: bigint | null;
+};
+
+/** Importe que cuenta en columna Taxímetro (excluye T3 y líneas solo propina). */
+export function tripTaximetroCents(trip: TripTaximetroInput): bigint {
+  if (isT3Fare(trip.fareType)) return BigInt(0);
+  if (isTipOnlyFare(trip.fareType)) return BigInt(0);
+  const gross = tripGrossCents(trip);
+  const tip = trip.tipCents ?? BigInt(0);
+  const storedGross = trip.grossAmountCents ?? BigInt(0);
+  // Propina en día de pago sin bruto de servicio (Uber payments driver).
+  if (storedGross <= BigInt(0) && tip > BigInt(0) && gross === tip) return BigInt(0);
+  return gross;
 }
 
 const GENERIC_UBER_FARE_LABELS = new Set([
@@ -215,7 +241,7 @@ export function computeLiquidationSummary(
   let periodTo: Date | null = null;
 
   for (const t of trips) {
-    const gross = tripGrossCents(t);
+    const gross = liquidationTripGrossCents(t);
     grossCents += gross;
     tipsCents += toNumber(t.tipCents);
     tollsCents += toNumber(t.tollCents);

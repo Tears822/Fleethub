@@ -9,7 +9,7 @@ import type { ShiftPlatformName } from "@/features/shifts/ui/cerrar-turnos-types
 import type { ShiftActivityDto } from "@fleethub/auth/shift-activity";
 import { computeDayMetricsFromTripSlices } from "@fleethub/auth/day-metrics";
 import { formatShiftEurHora, parseShiftHorasConectadoMinutes } from "@fleethub/auth/shift-activity";
-import { formatFareTypeLabel, isT3Fare, resolveTripFeeCents } from "@fleethub/auth/shift-liquidation";
+import { formatFareTypeLabel, isT3Fare, resolveTripFeeCents, tripTaximetroCents } from "@fleethub/auth/shift-liquidation";
 import {
   resolveTripPaymentDisplayAmounts,
   tripNeedsPaymentUiAttention,
@@ -137,7 +137,12 @@ function tripToLine(trip: ApiShiftTrip): TripLine {
 
   const importeCents = tripGrossCents({ grossAmountCents: grossRaw, netAmountCents: netRaw });
   const t3Cents = isT3Fare(trip.fareType) ? importeCents : BigInt(0);
-  const taximetroCents = importeCents - t3Cents;
+  const taximetroCents = tripTaximetroCents({
+    fareType: trip.fareType,
+    grossAmountCents: grossRaw,
+    netAmountCents: netRaw,
+    tipCents: tip,
+  });
   const comisionNum = fee > BigInt(0) ? -eurosFromCents(fee) : 0;
   const amountMissing = tripAmountMissing(gross, net);
 
@@ -225,7 +230,12 @@ function sumTripsFromApi(trips: ApiShiftTrip[], label: string): TripLine {
     importeCents += importe;
     const tripT3 = isT3Fare(trip.fareType) ? importe : BigInt(0);
     t3Cents += tripT3;
-    taximetroCents += importe - tripT3;
+    taximetroCents += tripTaximetroCents({
+      fareType: trip.fareType,
+      grossAmountCents: grossRaw,
+      netAmountCents: netRaw,
+      tipCents: tip,
+    });
     appCents += split.app;
     cashCents += split.cash;
     cardCents += split.card;

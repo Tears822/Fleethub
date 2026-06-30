@@ -5,6 +5,7 @@ import {
   freenowPublicDriverId,
   listAllFreenowCompanyDrivers,
 } from "./freenow-client.js";
+import { externalDriverIdTakenByOther } from "./platform-account-link-guard.js";
 
 /** Import ACTIVE FreeNow drivers into FleetHub (creates drivers + platform accounts). */
 export async function importFreenowDriversForTenant(
@@ -87,6 +88,18 @@ export async function importFreenowDriversForTenant(
         where: { tenantId, driverId: driver.id, platform: RidePlatform.FREENOW },
       });
       if (existingForDriver) {
+        if (
+          await externalDriverIdTakenByOther(
+            tx,
+            tenantId,
+            RidePlatform.FREENOW,
+            externalDriverId,
+            driver.id,
+          )
+        ) {
+          linked += 1;
+          continue;
+        }
         await tx.driverPlatformAccount.update({
           where: { id: existingForDriver.id },
           data: {
@@ -103,6 +116,18 @@ export async function importFreenowDriversForTenant(
           },
         });
       } else {
+        if (
+          await externalDriverIdTakenByOther(
+            tx,
+            tenantId,
+            RidePlatform.FREENOW,
+            externalDriverId,
+            driver.id,
+          )
+        ) {
+          linked += 1;
+          continue;
+        }
         await tx.driverPlatformAccount.create({
           data: {
             tenantId,

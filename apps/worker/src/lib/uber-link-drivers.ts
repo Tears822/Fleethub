@@ -6,6 +6,7 @@ import {
   uberDriverExternalId,
 } from "./uber-fleet-client.js";
 import { resolveTenantUberOrgId } from "./tenant-platform-config.js";
+import { externalDriverIdTakenByOther } from "./platform-account-link-guard.js";
 
 function normalizeName(s: string): string {
   return s
@@ -77,6 +78,9 @@ export async function linkUberDriversForTenant(tenantId: string): Promise<{
         if (existing.externalDriverId.toLowerCase() === uberId.toLowerCase() && existing.isActive) {
           continue;
         }
+        if (await externalDriverIdTakenByOther(tx, tenantId, RidePlatform.UBER, uberId, driver.id)) {
+          continue;
+        }
         await tx.driverPlatformAccount.update({
           where: { id: existing.id },
           data: {
@@ -92,14 +96,9 @@ export async function linkUberDriversForTenant(tenantId: string): Promise<{
           },
         });
       } else {
-        const existingByExt = await tx.driverPlatformAccount.findFirst({
-          where: {
-            tenantId,
-            platform: RidePlatform.UBER,
-            externalDriverId: { equals: uberId, mode: "insensitive" },
-          },
-        });
-        if (existingByExt) continue;
+        if (await externalDriverIdTakenByOther(tx, tenantId, RidePlatform.UBER, uberId, driver.id)) {
+          continue;
+        }
 
         await tx.driverPlatformAccount.create({
           data: {

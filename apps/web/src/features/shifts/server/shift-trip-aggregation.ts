@@ -113,7 +113,7 @@ export function moneyToShiftColumns(m: TripMoneyAgg) {
   return {
     viajes: m.count,
     total: formatEuroFromCents(m.grossCents),
-    taximetro: formatEuroFromCents(m.grossCents - m.t3Cents),
+    taximetro: formatEuroFromCents(m.taximetroCents),
     t3: formatEuroFromCents(m.t3Cents),
     app: formatEuroFromCents(m.appCents),
     efectivo: formatEuroFromCents(m.cashCents),

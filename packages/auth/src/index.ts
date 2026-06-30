@@ -93,7 +93,7 @@ export {
   SYSTEM_ECONOMIC_DEFAULTS,
   type CompanyEconomicDefaults,
 } from "./company-economic-defaults";
-export { formatFareTypeLabel, isT3Fare } from "./shift-liquidation";
+export { formatFareTypeLabel, isT3Fare, isTipOnlyFare, tripTaximetroCents } from "./shift-liquidation";
 export {
   addNetToPaymentBucket,
   addTripToPaymentBuckets,
@@ -306,6 +306,7 @@ export {
   type PlatformDriverCoverage,
   type TenantDriverCoverage,
   type TenantSyncHealthRow,
+  type TenantRunningSync,
 } from "./driver-coverage";
 export { getGlobalSyncApiSuccess24h, type SyncApiSuccess24h } from "./sync-api-health";
 export {
@@ -316,6 +317,20 @@ export {
   type AutoPollPlatformHealth,
   type GlobalAutoPollHealth,
 } from "./auto-poll-health";
+export {
+  heartbeatAtFromCursorHint,
+  isSyncRunStale,
+  syncRunLastActivity,
+  SYNC_RUN_RUNNING_STALE_MS,
+} from "./sync-run-staleness";
+export {
+  failRunningSyncRunsForStalledJob,
+  getSuperAdminSyncAlertSummary,
+  reconcileStaleSyncRuns,
+  type ReconcileStaleSyncRunsResult,
+  type StaleSyncRunRow,
+  type SuperAdminSyncAlertSummary,
+} from "./super-admin-sync-recovery";
 export {
   buildOperationalAlertsForTenant,
   buildSyncStaleAlertsForTenant,

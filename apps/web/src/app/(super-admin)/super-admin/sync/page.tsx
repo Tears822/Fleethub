@@ -10,6 +10,7 @@ import { SuperAdminIngestionCharts } from "@/features/super-admin/ui/super-admin
 import { SuperAdminIngestionKpisSummary } from "@/features/super-admin/ui/super-admin-ingestion-kpis";
 import { SuperAdminQueuesPanel } from "@/features/super-admin/ui/super-admin-queues-panel";
 import { SuperAdminSyncApiSuccessCard } from "@/features/super-admin/ui/super-admin-sync-api-success";
+import { SuperAdminSyncRecoveryActions } from "@/features/super-admin/ui/super-admin-sync-recovery-actions";
 import { SuperAdminSyncHealthTable } from "@/features/super-admin/ui/super-admin-sync-health-table";
 import {
   SuperAdminCard,
@@ -39,6 +40,9 @@ export default async function SuperAdminSyncPage() {
       <div className="mt-2 grid gap-3 lg:grid-cols-[1fr_280px]">
         <SuperAdminQueuesPanel queues={monitor.queues} />
         <SuperAdminSyncApiSuccessCard stats={monitor.syncApi24h} />
+      </div>
+      <div className="mt-3">
+        <SuperAdminSyncRecoveryActions />
       </div>
       <div className="mt-3">
         <SuperAdminAutoPollHealthCard health={monitor.autoPoll} />

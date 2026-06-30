@@ -7,6 +7,8 @@ import { syncStatusExportLabel } from "./export-labels.js";
 import { getExportTranslator } from "./export-translator.js";
 
 const SYNC_HISTORY_DAYS = 30;
+/** Enough for ~15 min FreeNow polls over 30 days; older runs within window still included. */
+const SYNC_HISTORY_EXPORT_MAX_ROWS = 2000;
 
 export async function buildSyncHistoryXlsx(session: AppSession): Promise<Buffer> {
   if (session.kind !== "tenant" || !session.tid) {
@@ -22,7 +24,7 @@ export async function buildSyncHistoryXlsx(session: AppSession): Promise<Buffer>
     tx.syncRun.findMany({
       where: { tenantId: session.tid!, startedAt: { gte: since } },
       orderBy: { startedAt: "desc" },
-      take: 200,
+      take: SYNC_HISTORY_EXPORT_MAX_ROWS,
       select: {
         platform: true,
         status: true,

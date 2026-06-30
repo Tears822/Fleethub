@@ -4,6 +4,7 @@ import {
   freenowPublicDriverId,
   listAllFreenowCompanyDrivers,
 } from "./freenow-client.js";
+import { externalDriverIdTakenByOther } from "./platform-account-link-guard.js";
 
 function normalizeName(s: string): string {
   return s
@@ -82,6 +83,10 @@ export async function linkFreenowDriversForTenant(
 
       const ext = existing?.externalDriverId?.trim() ?? "";
       if (!shouldUpdateFreenowExternalId(ext, fnId)) {
+        continue;
+      }
+
+      if (await externalDriverIdTakenByOther(tx, tenantId, RidePlatform.FREENOW, fnId, driver.id)) {
         continue;
       }
 

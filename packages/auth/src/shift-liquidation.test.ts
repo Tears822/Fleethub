@@ -4,6 +4,7 @@ import {
   computeLiquidationSummary,
   preferMergedFareType,
   resolveTripFeeCents,
+  tripTaximetroCents,
 } from "./shift-liquidation.js";
 
 const baseTrip = {
@@ -200,6 +201,42 @@ describe("computeLiquidationSummary", () => {
         summary.driverBonusCents +
         500 +
         1500,
+    );
+  });
+});
+
+describe("tripTaximetroCents", () => {
+  it("excludes Propina (día pago) lines from taxímetro", () => {
+    assert.equal(
+      tripTaximetroCents({
+        fareType: "Propina (día pago)",
+        grossAmountCents: null,
+        netAmountCents: 176n,
+        tipCents: 176n,
+      }),
+      0n,
+    );
+  });
+
+  it("keeps taxímetro fare gross", () => {
+    const result = tripTaximetroCents({
+      fareType: "Taxímetro",
+      grossAmountCents: 1500n,
+      netAmountCents: 1350n,
+      tipCents: 200n,
+    });
+    assert.equal(result, 1500n);
+  });
+
+  it("excludes T3 from taxímetro", () => {
+    assert.equal(
+      tripTaximetroCents({
+        fareType: "Precio cerrado (T3)",
+        grossAmountCents: 2000n,
+        netAmountCents: 1800n,
+        tipCents: 0n,
+      }),
+      0n,
     );
   });
 });

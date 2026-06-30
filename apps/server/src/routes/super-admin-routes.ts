@@ -19,6 +19,12 @@ import { readSession } from "../lib/session.js";
 import { buildSuperAdminCompaniesXlsx } from "../lib/super-admin-companies-export.js";
 import { buildSuperAdminTenantsXlsx } from "../lib/super-admin-tenants-export.js";
 import { buildSuperAdminUsersXlsx } from "../lib/super-admin-users-export.js";
+import {
+  purgeOrphanFleetSyncJobs,
+  superAdminForceTenantSync,
+  superAdminReconcileStaleSyncs,
+  superAdminRetryFailedFleetSyncJobs,
+} from "../lib/super-admin-sync-actions.js";
 
 function parseCookie(header: string | undefined, name: string): string | null {
   if (!header) return null;
@@ -178,6 +184,80 @@ export async function registerSuperAdminRoutes(app: FastifyInstance) {
       const status = code === "UNAUTHORIZED" ? 401 : 500;
       return reply.status(status).send({
         error: status === 401 ? "No autorizado." : "Error al revertir el cierre.",
+      });
+    }
+  });
+
+  app.post("/api/super-admin/tenants/:tenantId/sync", async (request, reply) => {
+    try {
+      await requirePlatformSession(request);
+      const { tenantId } = request.params as { tenantId: string };
+      const body = (request.body ?? {}) as { platform?: string; all?: boolean };
+      const result = await superAdminForceTenantSync(tenantId, body);
+      return reply.send({
+        ok: true,
+        enqueued: result.jobIds.length,
+        platforms: result.platforms,
+        reconciled: result.reconciled,
+        message: `Sincronización encolada para ${result.platforms.join(", ")}.`,
+      });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error de sincronización";
+      if (message.includes("REDIS_URL")) {
+        return reply.status(503).send({
+          ok: false,
+          queueUnavailable: true,
+          error: "Cola de sincronización no disponible.",
+        });
+      }
+      request.log.error({ err }, "super-admin force sync failed");
+      const code = err instanceof Error && err.message === "UNAUTHORIZED" ? 401 : 500;
+      return reply.status(code).send({
+        error: code === 401 ? "No autorizado." : "No se pudo encolar la sincronización.",
+      });
+    }
+  });
+
+  app.post("/api/super-admin/sync/reconcile-stale", async (request, reply) => {
+    try {
+      await requirePlatformSession(request);
+      const body = (request.body ?? {}) as { tenantId?: string; platform?: string };
+      const platform =
+        typeof body.platform === "string" && body.platform.trim()
+          ? (body.platform.trim().toUpperCase() as "UBER" | "FREENOW")
+          : undefined;
+      const result = await superAdminReconcileStaleSyncs({
+        tenantId: body.tenantId,
+        platform,
+      });
+      const orphans = await purgeOrphanFleetSyncJobs(200);
+      return reply.send({ ok: true, ...result, orphansRemoved: orphans });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error";
+      if (message.includes("REDIS_URL")) {
+        return reply.status(503).send({ ok: false, error: "Cola de sincronización no disponible." });
+      }
+      const code = message === "UNAUTHORIZED" ? 401 : 500;
+      return reply.status(code).send({
+        error: code === 401 ? "No autorizado." : "No se pudo reconciliar sync bloqueadas.",
+      });
+    }
+  });
+
+  app.post("/api/super-admin/sync/retry-failed", async (request, reply) => {
+    try {
+      await requirePlatformSession(request);
+      const body = (request.body ?? {}) as { limit?: number };
+      const retried = await superAdminRetryFailedFleetSyncJobs(body.limit ?? 50);
+      return reply.send({ ok: true, retried });
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "Error";
+      if (message.includes("REDIS_URL")) {
+        return reply.status(503).send({ ok: false, error: "Cola de sincronización no disponible." });
+      }
+      const code = message === "UNAUTHORIZED" ? 401 : 500;
+      return reply.status(code).send({
+        error: code === 401 ? "No autorizado." : "No se pudieron reintentar jobs fallidos.",
       });
     }
   });

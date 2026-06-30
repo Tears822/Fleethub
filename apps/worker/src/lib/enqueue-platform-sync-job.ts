@@ -14,6 +14,21 @@ export async function enqueuePlatformSyncJob(
   const queue = new Queue(FLEET_SYNC_QUEUE_NAME, { connection });
   const jobId = `platform-sync:${tenantId}:${platform}`;
   try {
+    const existing = await queue.getJob(jobId);
+    if (existing) {
+      const state = await existing.getState();
+      if (state === "failed") {
+        await existing.retry();
+        return jobId;
+      }
+      if (state === "waiting" || state === "delayed" || state === "active") {
+        return jobId;
+      }
+      if (state === "completed") {
+        await existing.remove();
+      }
+    }
+
     const job = await queue.add(
       "platform-sync",
       {

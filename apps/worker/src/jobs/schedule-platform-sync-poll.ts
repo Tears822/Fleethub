@@ -4,14 +4,14 @@ import { RidePlatform, withoutTenant, withTenantRls } from "@fleethub/db";
 import { getIntegrationEnvSnapshot } from "../config/integration-env.js";
 import { enqueuePlatformSyncJob } from "../lib/enqueue-platform-sync-job.js";
 import { FLEET_SYNC_QUEUE_NAME } from "../queues/constants.js";
-import { isSyncRunStale } from "./sync-run-staleness.js";
+import { isSyncRunStale, SYNC_RUN_RUNNING_STALE_MS } from "@fleethub/auth";
 
 const POLL_PLATFORMS = [RidePlatform.UBER, RidePlatform.FREENOW] as const;
 const DEFAULT_TICK_MS = 60_000;
 /** Retry Uber payment reports sooner after a PARTIAL sync (missing amounts). */
 export const PAYMENTS_PARTIAL_RETRY_MINUTES = 5;
 /** Max time a sync job may stay RUNNING before we treat it as orphaned (Uber reports can be slow). */
-const RUNNING_STALE_MS = 12 * 60_000;
+const RUNNING_STALE_MS = SYNC_RUN_RUNNING_STALE_MS;
 const POLL_HEARTBEAT_KEY = "fleethub:sync-poll:last-tick";
 const POLL_ENQUEUE_KEY = "fleethub:sync-poll:last-enqueue";
 

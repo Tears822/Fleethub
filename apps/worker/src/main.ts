@@ -10,8 +10,10 @@ import { scheduleIngestionHourlyRollupRefresh } from "./jobs/refresh-ingestion-h
 import { scheduleDriverDayMetricsRefresh } from "./jobs/refresh-driver-day-metrics.js";
 import { scheduleAutoPollWatchdog } from "./jobs/schedule-auto-poll-watchdog.js";
 import { schedulePlatformSyncPoll } from "./jobs/schedule-platform-sync-poll.js";
+import { scheduleSuperAdminSyncAlerts } from "./jobs/schedule-super-admin-sync-alerts.js";
 import { scheduleSyncStaleEmailAlerts } from "./jobs/schedule-sync-stale-alerts.js";
 import { createFleetSyncWorker } from "./queues/fleet-sync.worker";
+import { handleFleetSyncJobStall } from "./lib/handle-fleet-sync-stall.js";
 import { createWebhookIngestWorker } from "./queues/webhook-ingest.worker";
 import { createTenantExportWorker } from "./queues/tenant-export.worker.js";
 import {
@@ -112,6 +114,7 @@ async function main() {
   scheduleDriverDayMetricsRefresh();
   schedulePlatformSyncPoll(connection);
   scheduleAutoPollWatchdog();
+  scheduleSuperAdminSyncAlerts();
   scheduleSyncStaleEmailAlerts();
   const fleetWorker = createFleetSyncWorker(connection);
   const webhookWorker = createWebhookIngestWorker(connection);
@@ -120,6 +123,11 @@ async function main() {
   for (const w of [fleetWorker, webhookWorker, exportWorker]) {
     w.on("failed", (job, err) => {
       console.error("[worker] job failed", job?.id, w.name, err);
+      if (w === fleetWorker) {
+        void handleFleetSyncJobStall(connection, job, err).catch((e) =>
+          console.error("[worker] fleet-sync stall handler error:", e),
+        );
+      }
     });
     w.on("completed", (job) => {
       console.log("[worker] job completed", w.name, job.id, job.name);

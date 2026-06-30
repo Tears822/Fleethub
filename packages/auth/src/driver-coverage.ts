@@ -1,4 +1,5 @@
 import { RidePlatform, withTenant, withoutTenant } from "@fleethub/db";
+import { isSyncRunStale, SYNC_RUN_RUNNING_STALE_MS } from "./sync-run-staleness";
 
 const COVERAGE_PLATFORMS = [RidePlatform.UBER, RidePlatform.FREENOW] as const;
 
@@ -90,6 +91,13 @@ export async function getTenantDriverCoverage(tenantId: string): Promise<TenantD
   });
 }
 
+export type TenantRunningSync = {
+  platform: (typeof COVERAGE_PLATFORMS)[number];
+  startedAt: Date;
+  minutesRunning: number;
+  stale: boolean;
+};
+
 export type TenantSyncHealthRow = {
   tenantId: string;
   tenantSlug: string;
@@ -97,6 +105,7 @@ export type TenantSyncHealthRow = {
   coverage: TenantDriverCoverage;
   lastSuccessAt: Date | null;
   failedLast7d: number;
+  runningSyncs: TenantRunningSync[];
 };
 
 /** Super Admin: cobertura + último sync OK por tenant activo. */
@@ -104,7 +113,7 @@ export async function listTenantSyncHealth(): Promise<TenantSyncHealthRow[]> {
   const since7d = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
 
   return withoutTenant(async (tx) => {
-    const [tenants, failedByTenant, lastSuccessRuns] = await Promise.all([
+    const [tenants, failedByTenant, lastSuccessRuns, runningRuns] = await Promise.all([
       tx.tenant.findMany({
         where: { commercialStatus: "ACTIVE" },
         orderBy: { name: "asc" },
@@ -128,6 +137,13 @@ export async function listTenantSyncHealth(): Promise<TenantSyncHealthRow[]> {
         distinct: ["tenantId"],
         select: { tenantId: true, finishedAt: true },
       }),
+      tx.syncRun.findMany({
+        where: {
+          platform: { in: [...COVERAGE_PLATFORMS] },
+          status: "RUNNING",
+        },
+        select: { tenantId: true, platform: true, startedAt: true, cursorHint: true },
+      }),
     ]);
 
     const failedMap = new Map(
@@ -136,6 +152,24 @@ export async function listTenantSyncHealth(): Promise<TenantSyncHealthRow[]> {
     const lastSuccessMap = new Map(
       lastSuccessRuns.map((r) => [r.tenantId, r.finishedAt] as const),
     );
+    const runningByTenant = new Map<string, TenantRunningSync[]>();
+    const now = Date.now();
+    for (const run of runningRuns) {
+      if (!COVERAGE_PLATFORMS.includes(run.platform as (typeof COVERAGE_PLATFORMS)[number])) {
+        continue;
+      }
+      const platform = run.platform as (typeof COVERAGE_PLATFORMS)[number];
+      const minutesRunning = Math.max(0, Math.round((now - run.startedAt.getTime()) / 60_000));
+      const stale = isSyncRunStale(
+        run.startedAt,
+        run.cursorHint,
+        SYNC_RUN_RUNNING_STALE_MS,
+        now,
+      );
+      const list = runningByTenant.get(run.tenantId) ?? [];
+      list.push({ platform, startedAt: run.startedAt, minutesRunning, stale });
+      runningByTenant.set(run.tenantId, list);
+    }
 
     const rows: TenantSyncHealthRow[] = [];
     for (const t of tenants) {
@@ -147,6 +181,7 @@ export async function listTenantSyncHealth(): Promise<TenantSyncHealthRow[]> {
         coverage,
         lastSuccessAt: lastSuccessMap.get(t.id) ?? null,
         failedLast7d: failedMap.get(t.id) ?? 0,
+        runningSyncs: runningByTenant.get(t.id) ?? [],
       });
     }
     return rows;

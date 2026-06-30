@@ -7,7 +7,7 @@ import {
   upsertDriverPlatformDayMetric,
   upsertNormalizedTripsForDriver,
 } from "@fleethub/auth";
-import { RidePlatform, withTenant } from "@fleethub/db";
+import { RidePlatform, withoutTenant, withTenant } from "@fleethub/db";
 import { getFleetConnector } from "../connectors/registry";
 import {
   fetchFreenowTripsByDriver,
@@ -43,8 +43,9 @@ import {
   resolveTenantFreenowSyncDays,
   resolveTenantUberSyncDays,
 } from "../lib/tenant-platform-config.js";
+import { registerSyncRunHeartbeat, clearSyncRunHeartbeat } from "../lib/sync-run-heartbeat.js";
 import { refreshDriverConnectionsForTenant } from "../live/refresh-driver-connections.js";
-import { isSyncRunStale } from "./sync-run-staleness.js";
+import { isSyncRunStale, SYNC_RUN_RUNNING_STALE_MS } from "@fleethub/auth";
 
 export type PlatformSyncTrigger = "manual" | "poll";
 
@@ -78,10 +79,10 @@ function utcDayOnly(d: Date): Date {
 }
 
 /** Align with `schedule-platform-sync-poll` stale RUNNING reconciliation. */
-const RUNNING_STALE_MS = 12 * 60_000;
+const RUNNING_STALE_MS = SYNC_RUN_RUNNING_STALE_MS;
 /** While running, refresh cursorHint.heartbeatAt so slow-but-alive syncs
  *  (e.g. 28-day Uber report backfills) are not reconciled as orphaned. */
-const SYNC_HEARTBEAT_MS = 60_000;
+const SYNC_HEARTBEAT_MS = 45_000;
 
 export async function processPlatformSyncJob(job: Job<PlatformSyncJobData>): Promise<void> {
   const tenantId = job.data?.tenantId;
@@ -96,6 +97,14 @@ export async function processPlatformSyncJob(job: Job<PlatformSyncJobData>): Pro
       : "";
   const ingestSource = ingestSourceFromSyncTrigger(trigger);
   const connector = getFleetConnector(platform);
+
+  const tenantRow = await withoutTenant((tx) =>
+    tx.tenant.findUnique({ where: { id: tenantId }, select: { id: true } }),
+  );
+  if (!tenantRow) {
+    console.warn(`[worker] platform-sync ${tenantId} ${platform}: skipped — tenant deleted`);
+    return;
+  }
 
   const existingRunning = await withTenant(tenantId, (tx) =>
     tx.syncRun.findFirst({
@@ -146,6 +155,7 @@ export async function processPlatformSyncJob(job: Job<PlatformSyncJobData>): Pro
       clearInterval(heartbeat);
       heartbeat = null;
     }
+    clearSyncRunHeartbeat();
   };
   const writeHeartbeat = async () => {
     try {
@@ -176,6 +186,8 @@ export async function processPlatformSyncJob(job: Job<PlatformSyncJobData>): Pro
   };
   heartbeat = setInterval(() => void writeHeartbeat(), SYNC_HEARTBEAT_MS);
   heartbeat.unref?.();
+  registerSyncRunHeartbeat(writeHeartbeat);
+  void writeHeartbeat();
 
   const finish = async (status: string, errorMessage?: string | null) => {
     const normalized = status.trim().toUpperCase();
@@ -250,12 +262,19 @@ export async function processPlatformSyncJob(job: Job<PlatformSyncJobData>): Pro
     }
 
     if (!narrowDriverPlatformAccountId && platform === RidePlatform.FREENOW) {
-      const sync = await syncFreenowDriversForAllLinkedCompanies(tenantId);
-      if (!sync.ok) {
-        console.warn("[worker] freenow driver sync:", sync.message);
-      } else if (sync.created > 0 || sync.linked > 0) {
-        console.log(
-          `[worker] freenow drivers: created ${sync.created}, linked ${sync.linked} (${sync.platformDrivers} on umbrella).`,
+      try {
+        const sync = await syncFreenowDriversForAllLinkedCompanies(tenantId);
+        if (!sync.ok) {
+          console.warn("[worker] freenow driver sync:", sync.message);
+        } else if (sync.created > 0 || sync.linked > 0) {
+          console.log(
+            `[worker] freenow drivers: created ${sync.created}, linked ${sync.linked} (${sync.platformDrivers} on umbrella).`,
+          );
+        }
+      } catch (err) {
+        console.warn(
+          "[worker] freenow driver sync error (continuing trip sync):",
+          err instanceof Error ? err.message : err,
         );
       }
     }
