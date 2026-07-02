@@ -1,5 +1,10 @@
 import type { NormalizedTripUpsert } from "@fleethub/contracts";
 import type { GetDriverEarningsResponse200 } from "@api/freenow";
+import {
+  tenantCalendarDayKey,
+  tenantDayEndFromIso,
+  tenantDayStartFromIso,
+} from "@fleethub/auth/display-timezone";
 import { freenowPaymentSplitCents } from "./freenow-booking-mapper.js";
 import { getFreenowDriverEarnings } from "./freenow-client.js";
 
@@ -57,6 +62,20 @@ function allocateShare(
   return share > remaining ? remaining : share;
 }
 
+/** Group trips by Europe/Madrid calendar day (matches FreeNow portal day filters). */
+export function groupFreenowTripsByCalendarDay(
+  trips: NormalizedTripUpsert[],
+): Map<string, NormalizedTripUpsert[]> {
+  const byDay = new Map<string, NormalizedTripUpsert[]>();
+  for (const trip of trips) {
+    const key = tenantCalendarDayKey(new Date(trip.startedAt));
+    const list = byDay.get(key) ?? [];
+    list.push(trip);
+    byDay.set(key, list);
+  }
+  return byDay;
+}
+
 function recomputeNetAndSplit(trip: NormalizedTripUpsert): NormalizedTripUpsert {
   const gross = trip.grossAmountCents ?? 0n;
   const fee = trip.platformFeeCents ?? 0n;
@@ -80,7 +99,7 @@ export function applyFreenowDriverEarningsToTrips(
 ): NormalizedTripUpsert[] {
   if (trips.length === 0) return trips;
   if (totals.commissionCents <= 0n && totals.incentivesCents <= 0n) {
-    return trips;
+    return trips.map((t) => recomputeNetAndSplit({ ...t, platformBonusCents: 0n }));
   }
 
   const tripsNeedingFee = trips.filter((t) => !t.platformFeeCents || t.platformFeeCents <= 0n);
@@ -155,7 +174,7 @@ export function applyFreenowDriverEarningsToTrips(
     return recomputeNetAndSplit({
       ...trip,
       platformFeeCents: fee > 0n ? fee : trip.platformFeeCents,
-      platformBonusCents: bonus > 0n ? bonus : trip.platformBonusCents,
+      platformBonusCents: bonus,
     });
   });
 }
@@ -171,35 +190,48 @@ export async function enrichFreenowTripsWithDriverEarnings(params: {
     return { trips: params.trips, enriched: false };
   }
 
-  const earnings = await getFreenowDriverEarnings({
-    publicCompanyId: params.publicCompanyId,
-    publicDriverId: params.publicDriverId,
-    from: params.from,
-    to: params.to,
-  });
+  const byDay = groupFreenowTripsByCalendarDay(params.trips);
+  const enrichedTrips: NormalizedTripUpsert[] = [];
+  let enriched = false;
+  const messages: string[] = [];
 
-  if (!earnings.ok) {
-    return {
-      trips: params.trips,
-      enriched: false,
-      message: earnings.message,
-    };
+  for (const [dayKey, dayTrips] of [...byDay.entries()].sort(([a], [b]) => a.localeCompare(b))) {
+    const from = tenantDayStartFromIso(dayKey);
+    const to = tenantDayEndFromIso(dayKey);
+
+    const earnings = await getFreenowDriverEarnings({
+      publicCompanyId: params.publicCompanyId,
+      publicDriverId: params.publicDriverId,
+      from,
+      to,
+    });
+
+    if (!earnings.ok) {
+      messages.push(`${dayKey}: ${earnings.message}`);
+      enrichedTrips.push(...dayTrips);
+      await new Promise((r) => setTimeout(r, 400));
+      continue;
+    }
+
+    const totals = extractFreenowEarningsTotals(earnings.data);
+    if (totals.commissionCents <= 0n && totals.incentivesCents <= 0n) {
+      enrichedTrips.push(
+        ...dayTrips.map((t) => recomputeNetAndSplit({ ...t, platformBonusCents: 0n })),
+      );
+      await new Promise((r) => setTimeout(r, 250));
+      continue;
+    }
+
+    enriched = true;
+    enrichedTrips.push(...applyFreenowDriverEarningsToTrips(dayTrips, totals));
+    await new Promise((r) => setTimeout(r, 250));
   }
 
-  const totals = extractFreenowEarningsTotals(earnings.data);
-  if (totals.commissionCents <= 0n && totals.incentivesCents <= 0n) {
-    return {
-      trips: params.trips,
-      enriched: false,
-      message:
-        totals.numberOfTours === 0
-          ? "driver earnings returned zero tours for this date range"
-          : "driver earnings had no commission/incentives",
-    };
-  }
+  enrichedTrips.sort((a, b) => a.startedAt.localeCompare(b.startedAt));
 
   return {
-    trips: applyFreenowDriverEarningsToTrips(params.trips, totals),
-    enriched: true,
+    trips: enrichedTrips,
+    enriched,
+    message: messages.length > 0 ? messages.join("; ") : undefined,
   };
 }

@@ -17,6 +17,19 @@ function parseDateTime(raw: string): string | null {
   return parseUberDateTime(raw);
 }
 
+/** Must not fuzzy-match «Importe que se te ha pagado» (net earnings). */
+function pickCashCollectedColumn(row: UberCsvRow): string {
+  return (
+    pickColumnExact(row, [
+      "Importe que se te ha pagado : Saldo del viaje : Pagos : Efectivo cobrado",
+      "Importe que se te ha pagado:Saldo del viaje:Pagos:Efectivo cobrado",
+      "Cash Collected",
+    ]) ||
+    pickColumnMatching(row, ["saldo", "efectivo"]) ||
+    pickColumnMatching(row, ["cash", "collected"])
+  );
+}
+
 /** Parse fare/fee/tip/net from Spanish or English Payments Driver CSV row. */
 export function parsePaymentsDriverAmounts(row: UberCsvRow): {
   grossAmountCents: bigint | null;
@@ -77,10 +90,7 @@ export function parsePaymentsDriverAmounts(row: UberCsvRow): {
     "Payout",
   ]);
 
-  const cashRaw = pickColumn(row, [
-    "Importe que se te ha pagado : Saldo del viaje : Pagos : Efectivo cobrado",
-    "Cash Collected",
-  ]);
+  const cashRaw = pickCashCollectedColumn(row);
 
   const parentPrecioRaw = pickColumnExact(row, [
     "Importe que se te ha pagado : Tus ganancias : Precio",

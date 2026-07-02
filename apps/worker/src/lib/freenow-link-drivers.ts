@@ -39,7 +39,7 @@ function shouldUpdateFreenowExternalId(current: string, fnId: string): boolean {
 export async function linkFreenowDriversForTenant(
   tenantId: string,
   publicCompanyId: string,
-  options?: { fleetCompanyId?: string },
+  options?: { fleetCompanyId?: string; weakIdsOnly?: boolean },
 ): Promise<{ linked: number; freenowDrivers: number; message?: string }> {
   const drivers = await listAllFreenowCompanyDrivers(publicCompanyId, { status: "ACTIVE" });
   if (!drivers.ok) {
@@ -70,6 +70,16 @@ export async function linkFreenowDriversForTenant(
     });
 
     for (const driver of fleetDrivers) {
+      const existingAccount = await tx.driverPlatformAccount.findFirst({
+        where: { tenantId, driverId: driver.id, platform: RidePlatform.FREENOW },
+      });
+
+      if (options?.weakIdsOnly) {
+        if (!existingAccount) continue;
+        const ext = existingAccount.externalDriverId.trim();
+        if (isLikelyFreenowPublicDriverId(ext)) continue;
+      }
+
       const fnId =
         byName.get(normalizeName(driver.fullName)) ??
         (firstLastKey(driver.fullName)
@@ -77,9 +87,10 @@ export async function linkFreenowDriversForTenant(
           : undefined);
       if (!fnId) continue;
 
-      const existing = await tx.driverPlatformAccount.findFirst({
-        where: { tenantId, driverId: driver.id, platform: RidePlatform.FREENOW },
-      });
+      const existing = existingAccount ??
+        (await tx.driverPlatformAccount.findFirst({
+          where: { tenantId, driverId: driver.id, platform: RidePlatform.FREENOW },
+        }));
 
       const ext = existing?.externalDriverId?.trim() ?? "";
       if (!shouldUpdateFreenowExternalId(ext, fnId)) {

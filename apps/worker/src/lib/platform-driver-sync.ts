@@ -170,5 +170,23 @@ export async function syncFreenowDriversForAllLinkedCompanies(
     }
   }
 
+  if (linkedCount > 0 || linked.companies.length > 0) {
+    for (const fnCompany of linked.companies) {
+      const publicCompanyId = fnCompany.id?.trim();
+      if (!publicCompanyId) continue;
+      if (tenantCompanyIds && !tenantCompanyIds.has(publicCompanyId)) continue;
+      const weak = await linkFreenowDriversForTenant(tenantId, publicCompanyId, {
+        weakIdsOnly: true,
+      });
+      if (weak.message) return { ok: false, message: weak.message };
+      if (weak.linked > 0) {
+        linkedCount += weak.linked;
+        console.log(
+          `[freenow] weak-id upgrade ${publicCompanyId}: +${weak.linked} driver(s).`,
+        );
+      }
+    }
+  }
+
   return { ok: true, created: 0, linked: linkedCount, platformDrivers };
 }

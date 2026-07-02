@@ -272,7 +272,10 @@ function buildPatch(
     if (api.platformFeeCents != null && (trip.platformFeeCents == null || trip.platformFeeCents <= 0n)) {
       earningsPatch.platformFeeCents = api.platformFeeCents;
     }
-    if (api.platformBonusCents != null && (trip.platformBonusCents ?? 0n) === 0n && api.platformBonusCents > 0n) {
+    if (
+      api.platformBonusCents != null &&
+      api.platformBonusCents !== (trip.platformBonusCents ?? 0n)
+    ) {
       earningsPatch.platformBonusCents = api.platformBonusCents;
     }
     if (api.netAmountCents != null && api.netAmountCents !== trip.netAmountCents) {

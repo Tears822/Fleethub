@@ -47,6 +47,7 @@ function tripUpsertUpdateFields(
   } | null,
 ): Record<string, unknown> {
   const update: Record<string, unknown> = {
+    startedAt: data.startedAt,
     endedAt: data.endedAt,
     fareType: preferMergedFareType(data.fareType, existing?.fareType ?? null),
     ingestSource: data.ingestSource,
@@ -87,7 +88,7 @@ function tripUpsertUpdateFields(
     update.cardPaymentCents = data.cardPaymentCents ?? null;
   }
 
-  if (hasPositiveCents(data.platformBonusCents)) {
+  if (data.platformBonusCents != null) {
     update.platformBonusCents = data.platformBonusCents;
   }
   if (!paymentLocked) {

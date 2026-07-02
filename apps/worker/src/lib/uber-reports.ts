@@ -1,4 +1,5 @@
 import type { NormalizedTripUpsert } from "@fleethub/contracts";
+import { withTenant } from "@fleethub/db";
 import { sleepWithSyncHeartbeat } from "./sync-run-heartbeat.js";
 import { csvRowsToObjects, parseCsv } from "./uber-csv.js";
 import {
@@ -6,11 +7,16 @@ import {
   filterPaymentsDriverRows,
   tripsInWindowMissingAmounts,
 } from "./uber-payments-driver-mapper.js";
-import { resolveTenantUberOrgId } from "./tenant-platform-config.js";
+import {
+  orderUberOrgIds,
+  persistDriverUberSyncOrgId,
+  resolveTenantUberOrgIds,
+  uberSyncOrgIdFromMetadata,
+  type UberOrgRef,
+} from "./uber-tenant-group-orgs.js";
 import { mergeUberDriverTripUpserts } from "./uber-driver-mappers.js";
 import { paymentsDriverReportIsTripLevel } from "./uber-csv-columns.js";
 import {
-  resolveUberOrgId,
   type UberFleetResult,
   uberFleetPost,
   uberFleetGet,
@@ -390,15 +396,28 @@ export async function prefetchUberOrgReports(
   from: Date,
   to: Date,
 ): Promise<void> {
-  const orgOverride = await resolveTenantUberOrgId(tenantId);
-  const org = await resolveUberOrgId(orgOverride);
-  if (!org.ok) {
-    console.warn("[uber] prefetch reports:", org.message);
+  const orgs = await resolveTenantUberOrgIds(tenantId);
+  if (!orgs.ok) {
+    console.warn("[uber] prefetch reports:", orgs.message);
     return;
   }
-  await fetchUberTripActivityRows(org.data, from, to);
-  if (syncPaymentsOrderReport()) {
-    await fetchUberPaymentsOrderRows(org.data, from, to);
+
+  for (let i = 0; i < orgs.data.length; i++) {
+    if (i > 0) {
+      console.log(
+        `[uber] waiting ${REPORT_RATE_LIMIT_MS / 1000}s before next org report (rate limit)…`,
+      );
+      await sleepWithSyncHeartbeat(REPORT_RATE_LIMIT_MS);
+    }
+    const org = orgs.data[i]!;
+    await fetchUberTripActivityRows(org.orgId, from, to);
+    if (syncPaymentsOrderReport()) {
+      await fetchUberPaymentsOrderRows(org.orgId, from, to);
+    }
+  }
+
+  if (orgs.data.length > 1) {
+    console.log(`[uber] prefetched reports for ${orgs.data.length} org(s).`);
   }
 }
 
@@ -484,88 +503,169 @@ export async function fetchUberTripActivityTripsForDriver(args: {
 export async function syncUberTripsViaReports(args: {
   tenantId: string;
   driverId: string;
+  driverPlatformAccountId?: string;
   from: Date;
   to: Date;
 }): Promise<UberFleetResult<NormalizedTripUpsert[]>> {
-  const orgOverride = await resolveTenantUberOrgId(args.tenantId);
-  const org = await resolveUberOrgId(orgOverride);
-  if (!org.ok) return org;
+  const orgsResult = await resolveTenantUberOrgIds(args.tenantId);
+  if (!orgsResult.ok) return orgsResult;
 
-  let trips: NormalizedTripUpsert[] = [];
-
-  const activity = await fetchUberTripActivityRows(org.data, args.from, args.to);
-  if (activity.ok) {
-    trips = filterTripActivityRows(activity.data, args);
-  } else if (!isRateLimited(activity.message)) {
-    console.warn("[uber] trip activity report:", activity.message);
+  let preferredOrgId: string | null = null;
+  if (args.driverPlatformAccountId) {
+    const dpa = await withTenant(args.tenantId, (tx) =>
+      tx.driverPlatformAccount.findFirst({
+        where: { id: args.driverPlatformAccountId, platform: "UBER" },
+        select: { metadata: true },
+      }),
+    );
+    preferredOrgId = uberSyncOrgIdFromMetadata(dpa?.metadata);
   }
 
-  if (syncPaymentsOrderReport() || syncPaymentsDriverReport()) {
-    const orderCacheKey = `payments-order:${org.data}:${args.from.getTime()}:${args.to.getTime()}`;
-    const driverCacheKey = `payments:${org.data}:${args.from.getTime()}:${args.to.getTime()}`;
-    const needsRateLimitWait =
-      (activity.ok || isRateLimited(activity.message ?? "")) &&
-      !paymentsOrderCache.has(orderCacheKey) &&
-      !paymentsDriverCache.has(driverCacheKey);
-    if (needsRateLimitWait) {
-      console.log(
-        `[uber] waiting ${REPORT_RATE_LIMIT_MS / 1000}s before payments report (rate limit)…`,
-      );
+  const orgOrder = orderUberOrgIds(orgsResult.data, preferredOrgId);
+  let trips: NormalizedTripUpsert[] = [];
+  let usedOrg: UberOrgRef | null = null;
+
+  async function tryActivityForOrg(org: UberOrgRef): Promise<NormalizedTripUpsert[]> {
+    const activity = await fetchUberTripActivityRows(org.orgId, args.from, args.to);
+    if (!activity.ok) {
+      if (!isRateLimited(activity.message)) {
+        console.warn(`[uber] trip activity (${org.orgName}):`, activity.message);
+      }
+      return [];
+    }
+    return filterTripActivityRows(activity.data, args);
+  }
+
+  async function tryPaymentsForOrg(org: UberOrgRef): Promise<NormalizedTripUpsert[]> {
+    if (!syncPaymentsOrderReport()) return [];
+    const orderPayments = await fetchUberPaymentsOrderRows(org.orgId, args.from, args.to);
+    if (!orderPayments.ok || orderPayments.data.length === 0) return [];
+    return filterPaymentsDriverRows(orderPayments.data, args);
+  }
+
+  const preferred = preferredOrgId ? orgOrder.find((o) => o.orgId === preferredOrgId) : undefined;
+  const scanOrder = preferred
+    ? [preferred, ...orgOrder.filter((o) => o.orgId !== preferred.orgId)]
+    : orgOrder;
+
+  for (let i = 0; i < scanOrder.length; i++) {
+    const org = scanOrder[i]!;
+    if (i > 0) {
       await sleepWithSyncHeartbeat(REPORT_RATE_LIMIT_MS);
     }
-
-    if (syncPaymentsOrderReport()) {
-      const orderPayments = await fetchUberPaymentsOrderRows(org.data, args.from, args.to);
-      if (orderPayments.ok && orderPayments.data.length > 0) {
-        const paymentTrips = filterPaymentsDriverRows(orderPayments.data, args);
-        if (paymentTrips.length > 0) {
-          trips = mergeUberDriverTripUpserts(trips, paymentTrips);
-          console.log(
-            `[uber] payments order report → ${paymentTrips.length} trip row(s), ${countTripsWithAmounts(trips)} with amounts for driver ${args.driverId.slice(0, 8)}…`,
-          );
-        }
-      } else if (!orderPayments.ok) {
-        console.warn("[uber] payments order report:", orderPayments.message);
-      }
-    }
-
-    if (
-      syncPaymentsDriverReport() &&
-      trips.length > 0 &&
-      tripsInWindowMissingAmounts(trips, args.from, args.to)
-    ) {
-      const payments = await fetchUberPaymentsDriverRows(org.data, args.from, args.to);
-      if (payments.ok && payments.data.length > 0) {
-        if (!paymentsReportFormatLogged) {
-          paymentsReportFormatLogged = true;
-          const tripLevel = paymentsDriverReportIsTripLevel(payments.data);
-          console.log(
-            `[uber] payments driver report format: ${tripLevel ? "trip-level" : "driver summary (no per-trip UUID)"}`,
-          );
-          if (!tripLevel) {
-            console.warn(
-              "[uber] payments driver CSV has no trip UUID — use REPORT_TYPE_PAYMENTS_ORDER for per-trip amounts.",
-            );
-          }
-        }
-
-        const paymentTrips = filterPaymentsDriverRows(payments.data, args);
-        if (paymentTrips.length > 0) {
-          trips = mergeUberDriverTripUpserts(trips, paymentTrips);
-          console.log(
-            `[uber] payments driver report → ${paymentTrips.length} trip row(s), ${countTripsWithAmounts(trips)} with amounts for driver ${args.driverId.slice(0, 8)}…`,
-          );
-        }
-      } else if (!payments.ok) {
-        console.warn("[uber] payments driver report:", payments.message);
-      }
+    const filtered = await tryActivityForOrg(org);
+    if (filtered.length > 0) {
+      trips = filtered;
+      usedOrg = org;
+      break;
     }
   }
 
   if (trips.length === 0) {
-    console.log(
-      `[uber] no trips for driver ${args.driverId.slice(0, 8)}… in ${args.from.toISOString().slice(0, 10)}–${args.to.toISOString().slice(0, 10)} (org has no completed trips in Uber reports / payments API window)`,
+    for (let i = 0; i < scanOrder.length; i++) {
+      const org = scanOrder[i]!;
+      if (i > 0) {
+        await sleepWithSyncHeartbeat(REPORT_RATE_LIMIT_MS);
+      }
+      const paymentTrips = await tryPaymentsForOrg(org);
+      if (paymentTrips.length > 0) {
+        trips = paymentTrips;
+        usedOrg = org;
+        console.log(
+          `[uber] payments order (${org.orgName}) → ${paymentTrips.length} trip row(s) for driver ${args.driverId.slice(0, 8)}…`,
+        );
+        break;
+      }
+    }
+  }
+
+  const paymentsOrg = usedOrg ?? scanOrder[0]!;
+
+  if (
+    usedOrg &&
+    (syncPaymentsOrderReport() || syncPaymentsDriverReport()) &&
+    trips.length > 0 &&
+    syncPaymentsOrderReport()
+  ) {
+    const orderCacheKey = `payments-order:${paymentsOrg.orgId}:${args.from.getTime()}:${args.to.getTime()}`;
+    const driverCacheKey = `payments:${paymentsOrg.orgId}:${args.from.getTime()}:${args.to.getTime()}`;
+    const needsRateLimitWait =
+      !paymentsOrderCache.has(orderCacheKey) && !paymentsDriverCache.has(driverCacheKey);
+    if (needsRateLimitWait) {
+      console.log(
+        `[uber] waiting ${REPORT_RATE_LIMIT_MS / 1000}s before payments enrich (rate limit)…`,
+      );
+      await sleepWithSyncHeartbeat(REPORT_RATE_LIMIT_MS);
+    }
+
+    const orderPayments = await fetchUberPaymentsOrderRows(
+      paymentsOrg.orgId,
+      args.from,
+      args.to,
     );
+    if (orderPayments.ok && orderPayments.data.length > 0) {
+      const paymentTrips = filterPaymentsDriverRows(orderPayments.data, args);
+      if (paymentTrips.length > 0) {
+        trips = mergeUberDriverTripUpserts(trips, paymentTrips);
+        console.log(
+          `[uber] payments order enrich (${paymentsOrg.orgName}) → ${paymentTrips.length} trip row(s), ${countTripsWithAmounts(trips)} with amounts for driver ${args.driverId.slice(0, 8)}…`,
+        );
+      }
+    } else if (!orderPayments.ok) {
+      console.warn("[uber] payments order report:", orderPayments.message);
+    }
+  }
+
+  if (
+    syncPaymentsDriverReport() &&
+    usedOrg &&
+    trips.length > 0 &&
+    tripsInWindowMissingAmounts(trips, args.from, args.to)
+  ) {
+    const payments = await fetchUberPaymentsDriverRows(paymentsOrg.orgId, args.from, args.to);
+    if (payments.ok && payments.data.length > 0) {
+      if (!paymentsReportFormatLogged) {
+        paymentsReportFormatLogged = true;
+        const tripLevel = paymentsDriverReportIsTripLevel(payments.data);
+        console.log(
+          `[uber] payments driver report format: ${tripLevel ? "trip-level" : "driver summary (no per-trip UUID)"}`,
+        );
+        if (!tripLevel) {
+          console.warn(
+            "[uber] payments driver CSV has no trip UUID — use REPORT_TYPE_PAYMENTS_ORDER for per-trip amounts.",
+          );
+        }
+      }
+
+      const paymentTrips = filterPaymentsDriverRows(payments.data, args);
+      if (paymentTrips.length > 0) {
+        trips = mergeUberDriverTripUpserts(trips, paymentTrips);
+        console.log(
+          `[uber] payments driver report → ${paymentTrips.length} trip row(s), ${countTripsWithAmounts(trips)} with amounts for driver ${args.driverId.slice(0, 8)}…`,
+        );
+      }
+    } else if (!payments.ok) {
+      console.warn("[uber] payments driver report:", payments.message);
+    }
+  }
+
+  if (
+    usedOrg &&
+    args.driverPlatformAccountId &&
+    trips.length > 0 &&
+    usedOrg.orgId !== preferredOrgId
+  ) {
+    await persistDriverUberSyncOrgId(args.tenantId, args.driverPlatformAccountId, usedOrg);
+  }
+
+  if (trips.length === 0) {
+    const orgLabel =
+      scanOrder.length > 1 ? `${scanOrder.length} org(s)` : (scanOrder[0]?.orgName ?? "org");
+    console.log(
+      `[uber] no trips for driver ${args.driverId.slice(0, 8)}… in ${args.from.toISOString().slice(0, 10)}–${args.to.toISOString().slice(0, 10)} (${orgLabel}: no completed trips in Uber reports / payments API window)`,
+    );
+  } else if (usedOrg && scanOrder.length > 1) {
+    console.log(`[uber] driver ${args.driverId.slice(0, 8)}… trips from org ${usedOrg.orgName}`);
   }
 
   return { ok: true, data: trips };

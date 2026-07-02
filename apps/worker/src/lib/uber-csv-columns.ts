@@ -1,3 +1,5 @@
+import { wallTimeInZoneToUtc } from "@fleethub/auth/display-timezone";
+
 export type UberCsvRow = Record<string, string>;
 
 export function normalizeHeaderKey(s: string): string {
@@ -79,6 +81,42 @@ export function parseEuroAmount(raw: string): bigint | null {
 export function parseUberDateTime(raw: string): string | null {
   const s = raw.trim();
   if (!s) return null;
+
+  // Explicit offset or Z — trust Date.parse (strip redundant CET/CEST suffix when offset present).
+  if (/([+-]\d{2}:?\d{2}|Z)\s*$/i.test(s) || /\s[+-]\d{4}(\s|$)/.test(s)) {
+    const withoutTzName = s.replace(/\s+(CET|CEST|GMT|UTC)\s*$/i, "").trim();
+    const ms = Date.parse(withoutTzName);
+    if (!Number.isNaN(ms)) return new Date(ms).toISOString();
+  }
+
+  // ISO-like without timezone: treat wall clock as Europe/Madrid (Uber fleet CSV default).
+  const isoLocal =
+    /^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/.exec(s);
+  if (isoLocal) {
+    return wallTimeInZoneToUtc(
+      Number(isoLocal[1]),
+      Number(isoLocal[2]),
+      Number(isoLocal[3]),
+      Number(isoLocal[4]),
+      Number(isoLocal[5]),
+      Number(isoLocal[6] ?? 0),
+    ).toISOString();
+  }
+
+  // Spanish dd/mm/yyyy without timezone.
+  const esLocal =
+    /^(\d{1,2})\/(\d{1,2})\/(\d{4})[ T](\d{1,2}):(\d{2})(?::(\d{2})(?:\.(\d{1,3}))?)?$/.exec(s);
+  if (esLocal) {
+    return wallTimeInZoneToUtc(
+      Number(esLocal[3]),
+      Number(esLocal[2]),
+      Number(esLocal[1]),
+      Number(esLocal[4]),
+      Number(esLocal[5]),
+      Number(esLocal[6] ?? 0),
+    ).toISOString();
+  }
+
   const withoutTzName = s.replace(/\s+(CET|CEST|GMT|UTC|[A-ZÁÉÍÓÚ]{3,5})\s*$/i, "").trim();
   const ms = Date.parse(withoutTzName);
   if (!Number.isNaN(ms)) return new Date(ms).toISOString();

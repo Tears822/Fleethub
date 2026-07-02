@@ -3,6 +3,7 @@ import { isT3Fare } from "@fleethub/auth/shift-liquidation";
 import {
   type UberCsvRow,
   parseEuroAmount,
+  parseUberDateTime,
   pickColumn,
 } from "./uber-csv-columns.js";
 
@@ -19,11 +20,7 @@ function mapActivityProductFareType(raw: string): string | null {
 }
 
 function parseDateTime(raw: string): string | null {
-  const s = raw.trim();
-  if (!s) return null;
-  const ms = Date.parse(s);
-  if (Number.isNaN(ms)) return null;
-  return new Date(ms).toISOString();
+  return parseUberDateTime(raw);
 }
 
 /** Map Trip Activity CSV row → trip upsert (completed trips only). */

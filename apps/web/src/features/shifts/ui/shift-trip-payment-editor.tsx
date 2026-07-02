@@ -430,6 +430,7 @@ export function ShiftTripPaymentEditorCell({ editor, disabled, cell }: RowEditor
         className="w-full min-w-[120px] rounded border border-zinc-300 bg-white px-1.5 py-0.5 text-[11px]"
         aria-label={t("turnos.payment.typeLabel")}
       >
+        <option value="app">{t("turnos.payment.app")}</option>
         <option value="cash">{t("turnos.payment.cash")}</option>
         <option value="card">{t("turnos.payment.card")}</option>
         <option value="mixed">{t("turnos.payment.mixed")}</option>

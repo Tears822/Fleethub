@@ -4,6 +4,7 @@ import type { GetDriverEarningsResponse200 } from "@api/freenow";
 import {
   applyFreenowDriverEarningsToTrips,
   extractFreenowEarningsTotals,
+  groupFreenowTripsByCalendarDay,
 } from "./freenow-earnings-mapper.js";
 
 describe("extractFreenowEarningsTotals", () => {
@@ -58,5 +59,54 @@ describe("applyFreenowDriverEarningsToTrips", () => {
     assert.equal(trips[1]!.platformBonusCents, 200n);
     assert.equal(trips[0]!.netAmountCents, 5400n);
     assert.equal(trips[0]!.appPaymentCents, 5400n);
+  });
+
+  it("clears primas when incentives total is zero", () => {
+    const trips = applyFreenowDriverEarningsToTrips(
+      [
+        {
+          externalTripId: "a",
+          startedAt: "2026-07-01T10:00:00.000Z",
+          grossAmountCents: 5235n,
+          platformBonusCents: 60n,
+          tipCents: 0n,
+          paymentMethod: "app",
+          paymentValidated: true,
+        },
+      ],
+      {
+        commissionCents: 0n,
+        incentivesCents: 0n,
+        totalBeforeCommissionCents: 5235n,
+        numberOfTours: 1,
+      },
+    );
+    assert.equal(trips[0]!.platformBonusCents, 0n);
+  });
+});
+
+describe("groupFreenowTripsByCalendarDay", () => {
+  it("splits trips across Madrid calendar days", () => {
+    const byDay = groupFreenowTripsByCalendarDay([
+      {
+        externalTripId: "a",
+        startedAt: "2026-07-01T05:45:00.000Z",
+        grossAmountCents: 4875n,
+        tipCents: 0n,
+        paymentMethod: "app",
+        paymentValidated: true,
+      },
+      {
+        externalTripId: "b",
+        startedAt: "2026-07-02T05:45:00.000Z",
+        grossAmountCents: 5000n,
+        tipCents: 0n,
+        paymentMethod: "app",
+        paymentValidated: true,
+      },
+    ]);
+    assert.equal(byDay.size, 2);
+    assert.equal(byDay.get("2026-07-01")?.length, 1);
+    assert.equal(byDay.get("2026-07-02")?.length, 1);
   });
 });

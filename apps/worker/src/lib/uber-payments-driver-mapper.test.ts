@@ -30,6 +30,20 @@ describe("parsePaymentsDriverAmounts", () => {
     assert.equal(amounts.netAmountCents, 950n);
     assert.equal(amounts.cashPaymentCents, 950n);
   });
+
+  it("does not treat net earnings column as cash collected", () => {
+    const amounts = parsePaymentsDriverAmounts({
+      "Importe que se te ha pagado : Tus ganancias : Precio": "19.70",
+      "Importe que se te ha pagado:Tus ganancias:Precio:Precio": "19.70",
+      "Importe que se te ha pagado:Tus ganancias:Precio del servicio": "-2.36",
+      "Importe que se te ha pagado:Tus ganancias:Propina": "2.00",
+      "Importe que se te ha pagado": "19.34",
+    });
+    assert.equal(amounts.cashPaymentCents, null);
+    assert.equal(amounts.grossAmountCents, 1970n);
+    assert.equal(amounts.netAmountCents, 1934n);
+    assert.equal(amounts.tipCents, 200n);
+  });
 });
 
 describe("paymentsDriverRowToUpsert", () => {
@@ -57,6 +71,29 @@ describe("paymentsDriverRowToUpsert", () => {
     assert.equal(upsert?.netAmountCents, 1465n);
     assert.equal(upsert?.appPaymentCents, 1465n);
     assert.equal(upsert?.cashPaymentCents, null);
+  });
+
+  it("maps T3 digital trip with tip as app (not cash/card confirmation)", () => {
+    const upsert = paymentsDriverRowToUpsert({
+      "UUID del viaje": "trip-t3-tip-digital",
+      "UUID del conductor": "538b60a6-d4d1-4df7-9c20-6dacd9bb6956",
+      "Trip DropOff Time": "2026-06-27T19:33:00Z",
+      "Tipo de pago": "Digital",
+      "Importe que se te ha pagado : Tus ganancias : Precio": "19.70",
+      "Importe que se te ha pagado:Tus ganancias:Precio:Precio": "19.70",
+      "Importe que se te ha pagado:Tus ganancias:Precio del servicio": "-2.36",
+      "Importe que se te ha pagado:Tus ganancias:Propina": "2.00",
+      "Importe que se te ha pagado": "19.34",
+    });
+    assert.ok(upsert);
+    assert.equal(upsert?.paymentMethod, "app");
+    assert.equal(upsert?.paymentValidated, true);
+    assert.equal(upsert?.grossAmountCents, 1970n);
+    assert.equal(upsert?.netAmountCents, 1934n);
+    assert.equal(upsert?.tipCents, 200n);
+    assert.equal(upsert?.cashPaymentCents, null);
+    assert.equal(upsert?.appPaymentCents, 1734n);
+    assert.equal(upsert?.fareType, "Precio cerrado (T3)");
   });
 
   it("maps payments order row using en comparación con los informes timestamp", () => {

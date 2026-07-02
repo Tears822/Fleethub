@@ -158,6 +158,7 @@ export const uberConnector: FleetConnector = {
       const reportTrips = await syncUberTripsViaReports({
         tenantId: params.tenantId,
         driverId: dpa.externalDriverId,
+        driverPlatformAccountId: params.driverPlatformAccountId,
         from: params.from,
         to: params.to,
       });
