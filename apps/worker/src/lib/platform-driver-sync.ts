@@ -12,10 +12,13 @@ import { resolveTenantFreenowPublicCompanyId } from "./tenant-platform-config.js
 import { withTenant } from "@fleethub/db";
 import { importUberDriversForTenant } from "./uber-import-drivers.js";
 import { linkUberDriversForTenant } from "./uber-link-drivers.js";
+import { uberAutoImportEnabledForTenantSlug } from "./uber-auto-import-tenants.js";
 
-function uberAutoImportEnabled(): boolean {
-  const v = process.env.UBER_SYNC_IMPORT_ALL_DRIVERS?.trim().toLowerCase();
-  return v === "1" || v === "true" || v === "yes";
+async function resolveTenantSlug(tenantId: string): Promise<string | null> {
+  return withTenant(tenantId, async (tx) => {
+    const row = await tx.tenant.findUnique({ where: { id: tenantId }, select: { slug: true } });
+    return row?.slug ?? null;
+  });
 }
 
 export type PlatformDriverSyncResult =
@@ -32,17 +35,23 @@ export type PlatformDriverSyncResult =
 /**
  * Uber driver sync on automatic poll:
  * - Always link FleetHub drivers already in the tenant (name match → external id).
- * - Bulk import of every Uber org driver is opt-in only (UBER_SYNC_IMPORT_ALL_DRIVERS=1).
- *   Shared orgs must not auto-clone drivers into every tenant.
+ * - Bulk import from the tenant's Uber org when enabled (dedicated-org tenants: trevino, trade-taxi-sl).
+ *   Shared orgs (cosculluela) must not auto-clone — use UBER_SYNC_IMPORT_ALL_DRIVERS=1 only in dev.
  */
 export async function syncUberDriversForTenant(tenantId: string): Promise<PlatformDriverSyncResult> {
   let created = 0;
-  if (uberAutoImportEnabled()) {
+  const slug = await resolveTenantSlug(tenantId);
+  if (uberAutoImportEnabledForTenantSlug(slug)) {
     const imported = await importUberDriversForTenant(tenantId);
     if (!imported.ok) {
       return { ok: false, message: imported.message };
     }
     created = imported.created;
+    if (imported.created > 0) {
+      console.log(
+        `[uber] auto-import ${slug ?? tenantId.slice(0, 8)}: +${imported.created} driver(s), ${imported.linked}/${imported.total} linked.`,
+      );
+    }
   }
 
   const linked = await linkUberDriversForTenant(tenantId);

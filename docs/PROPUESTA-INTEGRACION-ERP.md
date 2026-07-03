@@ -18,7 +18,7 @@ Lo que **falta hoy** es exponer esos datos en una **API de lectura JSON** con **
 |----------|-------------------|
 | **MVP de integración** | 1–2 semanas desde acuerdo de requisitos |
 | **Entregable principal** | API REST JSON + API Key + documentación OpenAPI |
-| **Presupuesto** | A concretar en reunión (ver §10) |
+| **Presupuesto MVP** | **7.000 €** (IVA no incluido) — ver §7 y §10 |
 
 ---
 
@@ -440,18 +440,85 @@ Paridad con el Excel de Facturación, útil si el ERP prefiere fichero a JSON en
 
 ---
 
-## 7. Fases de proyecto
+## 7. Plan de hitos, pasos y plazos
 
-| Fase | Entregable | Plazo orientativo |
-|------|------------|-------------------|
-| **0. Alineación requisitos** | Checklist cerrado (§9), mapeo campos ERP | 2–3 días |
-| **1. MVP API lectura** | Auth API Key + endpoints B, C, E + OpenAPI | 5–8 días |
-| **2. Liquidaciones + paginación** | Endpoint D, cursor, rate limit, logs | 2–3 días |
-| **3. UAT + ajustes** | Pruebas con ERP real, correcciones | 2–3 días |
-| **4. (Opcional) Webhooks salientes** | Push al cerrar turno | 3–5 días adicionales |
-| **4. (Opcional) Export XLSX server** | Endpoint F | 1–2 días adicionales |
+Calendario orientativo desde **firma de propuesta y checklist de requisitos cerrado** (§9).
 
-**Total MVP (fases 0–3):** **1–2 semanas** desde acuerdo de requisitos y acceso a entorno de pruebas del ERP.
+### 7.1 Resumen hitos + presupuesto
+
+| Hito | Pasos clave | Duración | Semana | Importe | Pago |
+|------|-------------|----------|--------|---------|------|
+| **H0 — Kick-off** | Requisitos, mapeo ERP, sandbox | 2–3 días | S1 | Incluido | — |
+| **H1 — API core** | API Key, billing, trips, maestros, OpenAPI | 5–8 días | S1–S2 | **2.800 €** | Firma / inicio dev |
+| **H2 — Liquidaciones** | Endpoint liquidaciones, paginación, logs | 2–3 días | S2 | **2.100 €** | Sandbox funcional |
+| **H3 — UAT y go-live** | Pruebas ERP, ajustes, producción | 2–3 días | S2 | **2.100 €** | UAT aceptada |
+| | | **10–14 días** | **1–2 sem.** | **7.000 €** | |
+
+### 7.2 Detalle de pasos por hito
+
+#### H0 — Kick-off (2–3 días)
+
+| Paso | Actividad | Responsable |
+|------|-----------|-------------|
+| H0.1 | Reunión alineación; cerrar checklist §9 | FleetHub + cliente |
+| H0.2 | Mapeo campos ERP ↔ FleetHub (DNI, CIF, IDs) | FleetHub + equipo ERP |
+| H0.3 | Entorno sandbox + API Key de prueba | FleetHub |
+| H0.4 | Acta de requisitos firmada | Cliente |
+
+**Entregables:** acta de requisitos · sandbox operativo · contacto técnico ERP.
+
+---
+
+#### H1 — API core (5–8 días) — **2.800 €**
+
+| Paso | Actividad | Entregable |
+|------|-----------|------------|
+| H1.1 | Modelo API Key (generación, revocación, hash) | Panel admin tenant |
+| H1.2 | `GET /billing/report` (paridad Facturación) | Endpoint + tests |
+| H1.3 | `GET /trips` (detalle paginado) | Endpoint + cursor |
+| H1.4 | `GET /drivers` · `GET /companies` | Maestros ERP |
+| H1.5 | `GET /health` | Estado integración |
+| H1.6 | Documentación OpenAPI + ejemplos curl | Swagger / Redoc |
+
+**Entregables:** API sandbox · OpenAPI · guía de importación inicial.
+
+---
+
+#### H2 — Liquidaciones y hardening (2–3 días) — **2.100 €**
+
+| Paso | Actividad | Entregable |
+|------|-----------|------------|
+| H2.1 | `GET /liquidations` (cierres en caja) | Endpoint + filtros |
+| H2.2 | Paginación cursor en trips y liquidations | Importaciones grandes |
+| H2.3 | Rate limiting y logs de acceso por API Key | Seguridad operativa |
+| H2.4 | Demo sandbox con datos reales del tenant | Sesión remota |
+
+**Entregables:** sandbox completo · liquidaciones · paginación.
+
+---
+
+#### H3 — UAT y go-live (2–3 días) — **2.100 €**
+
+| Paso | Actividad | Entregable |
+|------|-----------|------------|
+| H3.1 | UAT conjunta con ERP (import manual + cron) | Informe incidencias |
+| H3.2 | Correcciones y ajustes de contrato API | Patch release |
+| H3.3 | Despliegue producción + API Key live | Go-live |
+| H3.4 | Handover: guía integración para equipo ERP | Documento final |
+
+**Entregables:** UAT firmada · API producción · 30 días garantía post go-live.
+
+---
+
+### 7.3 Opcionales (fuera del MVP)
+
+| Módulo | Pasos | Plazo | Importe |
+|--------|-------|-------|---------|
+| **Webhooks** | Evento `liquidation.closed` → URL ERP | +3–5 días | **1.800 €** |
+| **Export XLSX server** | `GET /export/billing.xlsx` | +1–2 días | **900 €** |
+| **Mantenimiento mensual** | Soporte integral FleetHub + API ERP (ver §10.3) | Continuo | **2.000 €/mes** |
+
+**Total MVP (H0–H3): 10–14 días laborables (1–2 semanas).**
 
 ---
 
@@ -486,20 +553,59 @@ Antes de desarrollo, conviene acordar:
 
 ## 10. Presupuesto y condiciones
 
-> **Nota:** cifras orientativas para la reunión; presupuesto firmes tras checklist §9.
+Propuesta económica vinculada a los hitos del §7. Importes en **EUR**, **IVA no incluido**.
 
-| Concepto | Descripción |
-|----------|-------------|
-| **MVP API integración** | Fases 0–3: API Key, billing report, trips, drivers/companies, OpenAPI, despliegue producción |
-| **Opcional webhooks** | Notificación `liquidation.closed` al ERP |
-| **Opcional export XLSX** | Descarga server-side equivalente a Facturación |
-| **Mantenimiento** | Evolución de API (nuevos campos, plataformas) bajo acuerdo de soporte |
+### 10.1 MVP — Integración ERP (H0–H3)
 
-Condiciones habituales:
+| Hito | % | Importe | Condición de pago |
+|------|---|---------|-------------------|
+| H0 — Kick-off y requisitos | — | Incluido | — |
+| H1 — API core | 40 % | **2.800 €** | Al inicio de desarrollo (firma) |
+| H2 — Liquidaciones y hardening | 30 % | **2.100 €** | Entrega sandbox funcional |
+| H3 — UAT y go-live | 30 % | **2.100 €** | UAT aceptada y API en producción |
+| **Total MVP** | 100 % | **7.000 €** | |
 
-- Pago por hitos (50 % inicio / 50 % UAT aceptada) o según contrato marco.
-- Cambios de alcance fuera del MVP → revisión de plazo y coste.
-- El cliente facilita contacto técnico ERP para UAT (1–2 sesiones).
+Ver justificación **7 k€ vs FleetHub ~2 k€** en `INTEGRACION-ERP-CLIENTE.md` §7.1.1.
+
+**Incluye:** desarrollo, despliegue, documentación OpenAPI, 2 sesiones UAT (remoto), 30 días garantía corrección de defectos post go-live.
+
+### 10.2 Módulos opcionales
+
+| Módulo | Importe |
+|--------|---------|
+| Webhooks salientes (`liquidation.closed`) | **1.800 €** |
+| Export Excel server-side (Facturación) | **900 €** |
+
+### 10.3 Mantenimiento mensual (opcional)
+
+**Cuota:** **2.000 €/mes** (IVA no incluido).
+
+Cobertura operativa de FleetHub + integración ERP. Tipos de trabajo incluidos:
+
+| Área | Alcance |
+|------|---------|
+| Integración ERP | API lectura, import ERP, OpenAPI, API Key, incidencias de contrato |
+| Uber / FreeNow | Sync, linking conductores, primas/comisiones/cobros, backfills puntuales |
+| Facturación / turnos | KPIs, T3, splits pago, liquidaciones, exports |
+| Bugs / incidencias | Producción: web, API, worker, ingesta |
+| Infra | Parches, despliegues, logs, salud servicios |
+| Maestros | Conductores, empresas, permisos, multi-tenant |
+| Monitorización | KPIs sync, webhooks, polling, colas |
+| Soporte | Consultas técnicas + 1 reunión/mes |
+| Docs | Guías integración, release notes API |
+| Mejoras menores | Ajustes UX/campos sin nuevo proyecto |
+
+**SLA:** crítico ≤ 4 h laborables · normal ≤ 24 h laborables · L–V 9–18 Madrid.
+
+**Fuera de alcance mensual:** desarrollo ERP cliente, módulos nuevos grandes, SLA 24×7, migraciones masivas.
+
+### 10.4 Condiciones generales
+
+- Validez de la oferta: **60 días** desde la fecha del documento.
+- Pago por hitos según tabla §10.1 (alternativa: 50 % firma / 50 % UAT bajo acuerdo).
+- Cambios de alcance fuera del MVP → presupuesto y plazo revisados por escrito.
+- El cliente facilita contacto técnico ERP y acceso a entorno de pruebas para UAT (1–2 sesiones).
+- FleetHub no incluye desarrollo en el ERP del cliente (solo API y documentación).
 
 ---
 
@@ -516,7 +622,36 @@ Condiciones habituales:
 
 ---
 
-## 12. Referencias técnicas FleetHub
+## 12. Argumentario — valor API vs cuota FleetHub
+
+Resumen para reunión comercial (detalle en `INTEGRACION-ERP-CLIENTE.md` §11):
+
+| # | Motivo |
+|---|--------|
+| 1 | **Producto distinto**: FleetHub = operativa flota; API = alimentar liquidaciones ERP (core business) |
+| 2 | **Evitan desarrollo interno** Uber/FN → ERP (3–6 meses, 15–40 k€+) |
+| 3 | **Un conector estable** vs mantener N APIs de plataforma en el ERP |
+| 4 | **Datos normalizados** (splits, primas, T3, closed/pending), no export crudo |
+| 5 | **Contrato versionado** OpenAPI + API Key + compromiso de compatibilidad |
+| 6 | **Proyecto a medida**: kick-off, mapeo DNI/CIF, sandbox, UAT con su equipo |
+| 7 | **Mayor criticidad**: impacto en nóminas y contabilidad, no solo operativa diaria |
+| 8 | **Seguridad extra**: auditoría, RGPD export masivo, aislamiento tenant |
+| 9 | **FleetHub absorbe cambios** Uber/FN; el ERP no se entera |
+| 10 | **Soporte bidireccional** FleetHub ↔ desarrollador ERP |
+| 11 | **ROI operativo**: menos Excel manual, menos errores de liquidación |
+| 12 | **Coste no diluido** en SaaS estándar — integración específica del cliente |
+
+**Frase clave:** *FleetHub gestiona la flota; la API alimenta el ERP.*
+
+**Objeción Cap9 (~10 €/coche × 200 ≈ 2.000 €/mes):** no es lo mismo — Cap9 = SaaS por vehículo; mantenimiento FleetHub = sync Uber/FN + API ERP + soporte al dev + infra. Ver `INTEGRACION-ERP-CLIENTE.md` §11.5–11.6.
+
+**Planes mantenimiento alternativos:** Esencial ~800–1.000 € · Estándar 2.000 € · Sin mantenimiento (solo garantía 30 d).
+
+**7 k€ vs FleetHub ~2 k€:** FleetHub = MVP operativo UI; API = capa B2B nueva (API Key, REST, OpenAPI, UAT ERP, contrato estable). Ver §7.1.1 cliente.
+
+---
+
+## 13. Referencias técnicas FleetHub
 
 | Recurso | Ubicación |
 |---------|-----------|
@@ -530,20 +665,13 @@ Condiciones habituales:
 
 ---
 
-## 13. Mensaje para el cliente (borrador)
-
-> Gracias por la consulta sobre integración con vuestro ERP.
->
-> Lo hemos revisado técnicamente: **la propuesta encaja bien con FleetHub**. Nosotros ya tenemos todos esos datos (viajes, desglose app/efectivo/tarjeta, propinas, peajes, por conductor y plataforma). Lo que falta es exponerlos en una **API de lectura JSON con API Key**, para que vuestro ERP los consuma con «Actualizar plataformas» o sync automático.
->
-> **FleetHub no sustituye vuestras liquidaciones internas**; solo envía los datos de plataformas. Vosotros mantenéis la lógica de cierre en el ERP.
->
-> Adjuntamos propuesta detallada (alcance, endpoints, plazos). El **MVP de integración** estaría en el orden de **1–2 semanas** desde acuerdo de requisitos. Quedamos a vuestra disposición para concretar presupuesto y checklist en reunión.
-
----
-
 ## 14. Historial del documento
 
 | Versión | Fecha | Cambios |
 |---------|-------|---------|
 | 1.0 | Jul 2026 | Propuesta inicial MVP integración ERP |
+| 1.1 | Jul 2026 | Hitos detallados (H0–H3) y presupuesto vinculado |
+| 1.2 | Jul 2026 | Mantenimiento mensual 2.000 €/mes con alcance detallado |
+| 1.3 | Jul 2026 | Argumentario valor API vs FleetHub |
+| 1.4 | Jul 2026 | Objeción Cap9/SaaS por coche y alternativas mantenimiento |
+| 1.5 | Jul 2026 | §7.1.1 Por qué MVP API 7.000 € vs FleetHub ~2.000 € |
