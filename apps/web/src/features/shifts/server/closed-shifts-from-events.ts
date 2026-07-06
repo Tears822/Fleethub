@@ -8,6 +8,7 @@ import {
 } from "@/features/shifts/server/shift-trip-aggregation";
 import type { TripForAggregation } from "@/features/shifts/server/shift-trip-aggregation";
 import { expandShiftRowsForTable } from "@/features/shifts/lib/shift-platform-filter";
+import { closedShiftSortTimestamp } from "@/features/shifts/lib/closed-shift-sort";
 import type { ClosedShiftRow } from "@/features/shifts/ui/cerrar-turnos-types";
 
 export function closedShiftRowsFromEvents(
@@ -45,5 +46,7 @@ export function closedShiftRowsFromEvents(
     }
   }
 
-  return rows;
+  return rows.sort(
+    (a, b) => closedShiftSortTimestamp(b) - closedShiftSortTimestamp(a),
+  );
 }

@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { Mail } from "lucide-react";
 import type { DashboardAlertItem } from "@/features/dashboard/server/dashboard-alerts.queries";
 import { buildApiUrl } from "@/shared/lib/api-url";
+import { useTranslations } from "@/shared/i18n/i18n-provider";
 import { useToast } from "@/shared/ui/toast-provider";
 
 export function DashboardAlertsEmailButton({
@@ -16,13 +17,14 @@ export function DashboardAlertsEmailButton({
   canSend: boolean;
 }) {
   const toast = useToast();
+  const { t } = useTranslations();
   const [sending, setSending] = useState(false);
 
   const actionable = alerts.filter((a) => a.id !== "all-clear");
 
   const handleSend = useCallback(async () => {
     if (actionable.length === 0) {
-      toast.error("No hay alertas para enviar.");
+      toast.error(t("dashboard.email.noAlerts"));
       return;
     }
     setSending(true);
@@ -41,16 +43,16 @@ export function DashboardAlertsEmailButton({
       });
       const data = (await res.json()) as { error?: string; sent?: number };
       if (!res.ok) {
-        toast.error(data.error ?? "No se pudo enviar el resumen");
+        toast.error(data.error ?? t("dashboard.email.sendError"));
         return;
       }
-      toast.success(`Resumen enviado a ${data.sent ?? 0} gestor(es).`);
+      toast.success(t("dashboard.email.sendSuccess", { count: String(data.sent ?? 0) }));
     } catch {
-      toast.error("No se pudo conectar con el API.");
+      toast.error(t("common.apiConnectionError"));
     } finally {
       setSending(false);
     }
-  }, [actionable, toast]);
+  }, [actionable, t, toast]);
 
   if (!canSend) return null;
 
@@ -61,15 +63,15 @@ export function DashboardAlertsEmailButton({
       disabled={sending || actionable.length === 0 || !smtpConfigured}
       title={
         !smtpConfigured
-          ? "Configura SMTP_USER y SMTP_PASS en el servidor"
+          ? t("dashboard.email.smtpMissing")
           : actionable.length === 0
-            ? "Sin alertas"
+            ? t("dashboard.email.noAlertsShort")
             : undefined
       }
       className="erp-btn-outline inline-flex items-center gap-1.5 text-xs normal-case"
     >
       <Mail className="h-3.5 w-3.5" aria-hidden />
-      {sending ? "Enviando…" : "Enviar resumen por email"}
+      {sending ? t("dashboard.email.sending") : t("dashboard.email.send")}
     </button>
   );
 }

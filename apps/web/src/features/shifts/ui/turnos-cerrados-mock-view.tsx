@@ -39,8 +39,10 @@ import { useTranslations } from "@/shared/i18n/i18n-provider";
 import { useToast } from "@/shared/ui/toast-provider";
 import {
   ShiftMetricsSortableHead,
-  useShiftTableSort,
+  useClosedShiftTableSort,
 } from "@/features/shifts/ui/shift-metrics-sortable-head";
+import { formatClosedShiftDateCell } from "@/features/shifts/lib/closed-shift-sort";
+import { appendTurnosCerradosContextParams } from "@/features/shifts/lib/turnos-cerrados-url";
 import { displayTaximetro } from "@/features/shifts/ui/shift-metrics-cells";
 
 function shiftRowDomId(key: string): string {
@@ -64,6 +66,7 @@ export function TurnosCerradosMockView({
   dateFrom: dateFromProp = DEFAULT_CLOSED_SHIFTS_RANGE.fromEs,
   dateTo: dateToProp = DEFAULT_CLOSED_SHIFTS_RANGE.toEs,
   initialOpenShiftKey,
+  initialDriverId,
   canExportCsv = false,
   canExportExcel = false,
   canRevertClose = false,
@@ -75,6 +78,8 @@ export function TurnosCerradosMockView({
   dateTo?: string;
   /** Abre el detalle del turno (p. ej. desde ficha de conductor). */
   initialOpenShiftKey?: string;
+  /** Filtra la lista a un conductor (p. ej. enlace desde ficha). */
+  initialDriverId?: string;
   canExportCsv?: boolean;
   canExportExcel?: boolean;
   /** Super Admin impersonating — puede revertir cierres erróneos (FRD §7.5). */
@@ -84,13 +89,18 @@ export function TurnosCerradosMockView({
   tenantId?: string;
 }) {
   const router = useRouter();
-  const { t } = useTranslations();
+  const { t, locale } = useTranslations();
   const toast = useToast();
   const usingLiveData = initialDbRows.length > 0;
   const rows = initialDbRows;
-  const monthOptions = useMemo(() => billingMonthQuickOptions(), []);
+  const monthOptions = useMemo(() => billingMonthQuickOptions(undefined, locale), [locale]);
 
-  const [searchQuery, setSearchQuery] = useState("");
+  const [driverFilterId, setDriverFilterId] = useState<string | undefined>(initialDriverId);
+  const [searchQuery, setSearchQuery] = useState(() => {
+    if (!initialDriverId) return "";
+    const match = initialDbRows.find((r) => r.driverId === initialDriverId);
+    return match?.conductor ?? "";
+  });
   const [platformFilter, setPlatformFilter] = useState<ShiftPlatformFilter>("all");
   const [expandedRowKey, setExpandedRowKey] = useState<string | null>(
     initialOpenShiftKey ?? null,
@@ -107,6 +117,21 @@ export function TurnosCerradosMockView({
     setAppliedTo(parseDateEs(dateToProp));
   }, [dateFromProp, dateToProp]);
 
+  useEffect(() => {
+    setDriverFilterId(initialDriverId);
+    if (!initialDriverId) return;
+    const match = rows.find((r) => r.driverId === initialDriverId);
+    if (match) setSearchQuery(match.conductor);
+  }, [initialDriverId, rows]);
+
+  const navContext = useMemo(
+    () => ({
+      shift: expandedRowKey ?? initialOpenShiftKey,
+      driver: driverFilterId,
+    }),
+    [driverFilterId, expandedRowKey, initialOpenShiftKey],
+  );
+
   const platformFilterOptions = useMemo(
     () => collectPlatformFiltersFromRows(rows),
     [rows],
@@ -115,16 +140,17 @@ export function TurnosCerradosMockView({
   const filteredRows = useMemo(() => {
     const platformScoped = filterShiftRowsForPlatform(rows, platformFilter);
     return platformScoped.filter((row) => {
+      if (driverFilterId && row.driverId !== driverFilterId) return false;
       if (!matchesSearchQuery(row.conductor, searchQuery)) return false;
       if (appliedFrom && appliedTo && !rowOverlapsRange(row, appliedFrom, appliedTo)) {
         return false;
       }
       return true;
     });
-  }, [appliedFrom, appliedTo, platformFilter, rows, searchQuery]);
+  }, [appliedFrom, appliedTo, driverFilterId, platformFilter, rows, searchQuery]);
 
   const { sortedRows: displayRows, toggle: toggleSort, dirFor } =
-    useShiftTableSort(filteredRows);
+    useClosedShiftTableSort(filteredRows);
 
   const exportFromIso = appliedFrom ? dateEsToIso(formatDateEs(appliedFrom)) : undefined;
   const exportToIso = appliedTo ? dateEsToIso(formatDateEs(appliedTo)) : undefined;
@@ -148,6 +174,8 @@ export function TurnosCerradosMockView({
     const target = rows.find((r) => shiftRowKey(r) === initialOpenShiftKey);
     if (!target) return;
     setExpandedRowKey(initialOpenShiftKey);
+    setDriverFilterId(target.driverId);
+    setSearchQuery(target.conductor);
     const toEs = (iso: string) => {
       const [y, m, d] = iso.split("-");
       return `${d}/${m}/${y}`;
@@ -186,20 +214,29 @@ export function TurnosCerradosMockView({
       toast.error(built.message);
       return;
     }
-    const params = new URLSearchParams(built.query);
-    if (initialOpenShiftKey) params.set("shift", initialOpenShiftKey);
+    const params = appendTurnosCerradosContextParams(
+      new URLSearchParams(built.query),
+      navContext,
+    );
     router.push(`/turnos-cerrados?${params.toString()}`);
     router.refresh();
-  }, [dateFrom, dateTo, initialOpenShiftKey, router, toast]);
+  }, [dateFrom, dateTo, navContext, router, toast]);
 
   const clearFilters = useCallback(() => {
     setSearchQuery("");
     setPlatformFilter("all");
+    setDriverFilterId(undefined);
+    setExpandedRowKey(null);
     setDateFrom(dateFromProp);
     setDateTo(dateToProp);
     setAppliedFrom(parseDateEs(dateFromProp));
     setAppliedTo(parseDateEs(dateToProp));
-  }, [dateFromProp, dateToProp]);
+    const built = billingRangeQueryFromEs(dateFromProp, dateToProp);
+    if (built.ok) {
+      router.push(`/turnos-cerrados?${built.query}`);
+      router.refresh();
+    }
+  }, [dateFromProp, dateToProp, router]);
 
   const setQuickRange = useCallback(
     (preset: "today" | "yesterday" | "7d" | "30d") => {
@@ -215,17 +252,25 @@ export function TurnosCerradosMockView({
       }
       const built = billingRangeQueryFromEs(formatDateEs(start), formatDateEs(end));
       if (!built.ok) return;
-      const params = new URLSearchParams(built.query);
-      if (initialOpenShiftKey) params.set("shift", initialOpenShiftKey);
+      const params = appendTurnosCerradosContextParams(
+        new URLSearchParams(built.query),
+        navContext,
+      );
       router.push(`/turnos-cerrados?${params.toString()}`);
       router.refresh();
     },
-    [initialOpenShiftKey, router],
+    [navContext, router],
   );
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearchQuery(value);
+    if (driverFilterId) setDriverFilterId(undefined);
+  }, [driverFilterId]);
 
   const hasActiveFilters =
     searchQuery.trim() !== "" ||
     platformFilter !== "all" ||
+    Boolean(driverFilterId) ||
     dateFrom !== dateFromProp ||
     dateTo !== dateToProp;
 
@@ -277,7 +322,7 @@ export function TurnosCerradosMockView({
         <div className="flex flex-wrap items-center gap-2">
           <ErpSearchInput
             value={searchQuery}
-            onChange={setSearchQuery}
+            onChange={handleSearchChange}
             placeholder={t("turnos.searchConductor")}
             aria-label={t("conductores.searchAria")}
             wrapperClassName="min-w-[10rem] flex-1 md:max-w-xs"
@@ -340,8 +385,10 @@ export function TurnosCerradosMockView({
                 if (!opt) return;
                 setDateFrom(opt.fromEs);
                 setDateTo(opt.toEs);
-                const params = new URLSearchParams(opt.query);
-                if (initialOpenShiftKey) params.set("shift", initialOpenShiftKey);
+                const params = appendTurnosCerradosContextParams(
+                  new URLSearchParams(opt.query),
+                  navContext,
+                );
                 router.push(`/turnos-cerrados?${params.toString()}`);
                 router.refresh();
               }}
@@ -400,12 +447,17 @@ export function TurnosCerradosMockView({
         <VuiTableShell className="shift-list-table-scroll min-h-[8rem]">
           <table className="w-full min-w-[1024px] text-left text-sm">
             <thead className="vui-table-head vui-table-sticky-head">
-              <ShiftMetricsSortableHead dirFor={dirFor} toggle={toggleSort} actionsLabel="" />
+              <ShiftMetricsSortableHead
+                dirFor={dirFor}
+                toggle={toggleSort}
+                showClosedDate
+                actionsLabel=""
+              />
             </thead>
             <tbody>
               {filteredRows.length === 0 ? (
                 <tr className="vui-table-row">
-                  <td colSpan={13} className="py-8 text-center text-sm text-zinc-500">
+                  <td colSpan={14} className="py-8 text-center text-sm text-zinc-500">
                     {rows.length === 0
                       ? t("turnos.noClosed")
                       : t("turnos.noClosedFilterMatch")}
@@ -425,6 +477,9 @@ export function TurnosCerradosMockView({
                         <ShiftPlatformDots
                           slugs={platformSlugsFromRow(r.plataformas, r.desglose)}
                         />
+                      </td>
+                      <td className="whitespace-nowrap text-[11px] tabular-nums text-zinc-700">
+                        {formatClosedShiftDateCell(r)}
                       </td>
                       <td className="min-w-[10rem] max-w-[14rem]">
                         <div className="font-medium text-zinc-900">{r.conductor}</div>
@@ -457,7 +512,7 @@ export function TurnosCerradosMockView({
                     </tr>
                     {isExpanded ? (
                       <tr className="vui-table-row">
-                        <td colSpan={13} className="p-0">
+                        <td colSpan={14} className="p-0">
                           <ShiftRowDetailPanel
                             row={r}
                             variant="cerrado"

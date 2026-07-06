@@ -79,7 +79,7 @@ export function applyConnectedNowToKpis(
   connected: ConnectedNowSnapshot,
 ): MockDashboardKpi[] {
   const card: MockDashboardKpi = {
-    title: "Conectados ahora",
+    id: "connectedNow",
     value: String(connected.count),
     hint: connected.hint,
     icon: Radio,
@@ -89,11 +89,11 @@ export function applyConnectedNowToKpis(
   const next: MockDashboardKpi[] = [];
   for (const k of kpis) {
     next.push(k);
-    if (k.title === "Turnos activos ahora") {
+    if (k.id === "openShiftsNow") {
       next.push(card);
     }
   }
-  if (!next.some((k) => k.title === "Conectados ahora")) {
+  if (!next.some((k) => k.id === "connectedNow")) {
     next.splice(2, 0, card);
   }
   return next;
@@ -105,18 +105,10 @@ export function applyPaymentAlertCountToKpis(
   paymentAlertCount: number,
 ): MockDashboardKpi[] {
   return kpis.map((k) =>
-    k.title === "Avisos"
+    k.id === "alerts"
       ? {
           ...k,
           value: String(paymentAlertCount),
-          hint:
-            paymentAlertCount === 0
-              ? "pagos confirmados · Cerrar turnos"
-              : "forma de pago sin confirmar · Cerrar turnos",
-          trend:
-            paymentAlertCount > 0
-              ? { text: "Revisar", positive: false, tone: "danger" }
-              : undefined,
           icon: Bell,
           accent: paymentAlertCount > 0 ? "red" : "green",
         }
@@ -275,51 +267,35 @@ export async function loadDashboardOperativaSnapshot(
 
   const kpis: MockDashboardKpi[] = [
     {
-      title: "Conductores activos hoy",
+      id: "activeDriversToday",
       value: String(activeDriversToday),
-      hint: `de ${totalDrivers} en plantilla · turno con inicio hoy`,
+      hintParams: { totalDrivers },
       icon: UsersRound,
     },
     {
-      title: "Turnos activos ahora",
+      id: "openShiftsNow",
       value: String(openShiftCount),
-      hint: "turno abierto · pendientes tras último cierre hoy",
       icon: Clock3,
     },
     {
-      title: "Facturación del día",
+      id: "dayBilling",
       value: formatEuroInt(dayGross),
-      hint: "importe bruto acumulado · cerrados hoy",
       icon: Euro,
     },
     {
-      title: "Viajes realizados",
+      id: "tripsToday",
       value: String(todayClosedApp.length),
-      hint: "Uber + FreeNow · cerrados hoy",
       icon: Car,
     },
     {
-      title: "Turnos pendientes",
+      id: "pendingShifts",
       value: String(pendingDriverCount),
-      hint: "sin liquidar · igual que Cerrar turnos",
-      trend:
-        pendingDriverCount > 0
-          ? { text: "Revisar", positive: false, tone: "warning" }
-          : undefined,
       icon: AlarmClock,
       accent: pendingDriverCount > 0 ? "amber" : "green",
     },
     {
-      title: "Avisos",
+      id: "alerts",
       value: String(paymentAlertCount),
-      hint:
-        paymentAlertCount === 0
-          ? "pagos confirmados · Cerrar turnos"
-          : "forma de pago sin confirmar · Cerrar turnos",
-      trend:
-        paymentAlertCount > 0
-          ? { text: "Revisar", positive: false, tone: "danger" }
-          : undefined,
       icon: Bell,
       accent: paymentAlertCount > 0 ? "red" : "green",
     },
@@ -352,40 +328,35 @@ export function buildEmptyDashboardOperativaSnapshot(
 
   const kpis: MockDashboardKpi[] = [
     {
-      title: "Conductores activos hoy",
+      id: "activeDriversToday",
       value: "0",
-      hint: totalDrivers > 0 ? `de ${totalDrivers} en plantilla` : "sin plantilla",
+      hintParams: totalDrivers > 0 ? { totalDrivers } : undefined,
       icon: UsersRound,
     },
     {
-      title: "Turnos activos ahora",
+      id: "openShiftsNow",
       value: "0",
-      hint: "turno abierto · pendientes tras último cierre hoy",
       icon: Clock3,
     },
     {
-      title: "Facturación del día",
+      id: "dayBilling",
       value: formatEuroInt(BigInt(0)),
-      hint: "importe bruto acumulado · cerrados hoy",
       icon: Euro,
     },
     {
-      title: "Viajes realizados",
+      id: "tripsToday",
       value: "0",
-      hint: "Uber + FreeNow · cerrados hoy",
       icon: Car,
     },
     {
-      title: "Turnos pendientes",
+      id: "pendingShifts",
       value: "0",
-      hint: "sin liquidar · igual que Cerrar turnos",
       icon: AlarmClock,
       accent: "green",
     },
     {
-      title: "Avisos",
+      id: "alerts",
       value: "0",
-      hint: "pagos confirmados · Cerrar turnos",
       icon: Bell,
       accent: "green",
     },

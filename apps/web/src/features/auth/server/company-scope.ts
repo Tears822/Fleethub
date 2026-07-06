@@ -11,15 +11,20 @@ import {
 import type { CompanyScope } from "@fleethub/auth/tenant-scope";
 import { listCompanyScopeOptions } from "@/features/companies/server/company-scope-options.queries";
 import type { TenantSession } from "@/features/auth/server/session.service";
+import { getSessionTranslator } from "@/shared/i18n/tenant-translator.server";
 
 export type { CompanyScope };
 export { COMPANY_SCOPE_ALL, FH_COMPANY_SCOPE_COOKIE };
 
 /** Etiqueta de empresa(s) activas en el shell (para subtítulos operativos). */
 export async function resolveCompanyScopeLabel(session: TenantSession): Promise<string> {
+  const { t } = await getSessionTranslator(session);
   const jar = await cookies();
   const raw = jar.get(FH_COMPANY_SCOPE_COOKIE)?.value;
-  return companyScopeLabelForSession(session, { cookieValue: raw });
+  const label = await companyScopeLabelForSession(session, { cookieValue: raw });
+  if (label === "Todas las empresas") return t("billing.allCompanies");
+  if (label === "Sin empresas") return t("common.noCompanies");
+  return label;
 }
 
 export async function resolveCompanyScope(session: TenantSession): Promise<CompanyScope> {

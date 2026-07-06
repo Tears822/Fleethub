@@ -42,7 +42,7 @@ export function parseTripIngestSource(raw: unknown): TripIngestSource | null {
 export function parseSyncRunCursorHint(cursorHint: unknown): SyncRunCursorHint {
   if (!cursorHint || typeof cursorHint !== "object") return {};
   const o = cursorHint as Record<string, unknown>;
-  const trigger = o.trigger === "poll" ? "poll" : o.trigger === "manual" ? "manual" : undefined;
+  const trigger = o.trigger === "poll" ? "poll" : o.trigger === "liquidation" ? "liquidation" : o.trigger === "manual" ? "manual" : undefined;
   const ingestSource =
     parseTripIngestSource(o.ingestSource) ??
     (trigger ? ingestSourceFromSyncTrigger(trigger) : undefined);

@@ -20,6 +20,7 @@ import {
   requireOperativaWrite,
   requireTenantSession,
 } from "../lib/rbac.js";
+import { syncDriverPlatformsBeforeLiquidation } from "../lib/sync-driver-for-liquidation.js";
 import { readSession } from "../lib/session.js";
 
 function handleRbacError(reply: FastifyReply, err: unknown) {
@@ -240,6 +241,15 @@ export async function registerTenantOperativaRoutes(app: FastifyInstance) {
         session,
         request.headers.cookie,
       );
+      const body = (request.body ?? {}) as {
+        driverId?: string;
+        platform?: string;
+        timeTo?: string;
+      };
+      const driverId = body.driverId?.trim() ?? "";
+      if (driverId) {
+        await syncDriverPlatformsBeforeLiquidation(session.tid, driverId, body);
+      }
       const result = await previewShiftLiquidation(session, request.body, { companyScope });
       if (!result.ok) return reply.status(400).send({ error: result.error.message });
       return reply.send(result.value);

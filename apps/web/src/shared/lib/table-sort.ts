@@ -35,6 +35,8 @@ export function useTableSort<K extends string, T>(
   defaultKey: K,
   defaultDir: SortDir = "desc",
   comparators: Record<K, (a: T, b: T, dir: SortDir) => number>,
+  /** Direction when activating a column that is not currently sorted (default asc). */
+  dirWhenActivating?: Partial<Record<K, SortDir>>,
 ) {
   const [sort, setSort] = useState<{ key: K; dir: SortDir }>({
     key: defaultKey,
@@ -46,9 +48,9 @@ export function useTableSort<K extends string, T>(
       if (current.key === key) {
         return { key, dir: current.dir === "asc" ? "desc" : "asc" };
       }
-      return { key, dir: "asc" };
+      return { key, dir: dirWhenActivating?.[key] ?? "asc" };
     });
-  }, []);
+  }, [dirWhenActivating]);
 
   const sortedRows = useMemo(() => {
     const cmp = comparators[sort.key];

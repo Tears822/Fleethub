@@ -198,7 +198,7 @@ export function FacturacionMockView({
   canExportExcel?: boolean;
   companyScopeLabel?: string;
 }) {
-  const { t } = useTranslations();
+  const { t, locale } = useTranslations();
   const router = useRouter();
   const toast = useToast();
   const scopeLabel = companyScopeLabel ?? t("billing.allCompanies");
@@ -253,7 +253,7 @@ export function FacturacionMockView({
   );
 
   const hasActiveFilters = searchQuery.trim() !== "" || platformFilter !== "all";
-  const monthOptions = useMemo(() => billingMonthQuickOptions(), []);
+  const monthOptions = useMemo(() => billingMonthQuickOptions(undefined, locale), [locale]);
 
   const displayPeriodKpis = useMemo(() => {
     const raw =

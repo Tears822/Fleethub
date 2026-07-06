@@ -35,7 +35,8 @@
     "success": "Operació completada",
     "apiConnectionError": "No s'ha pogut connectar amb l'API.",
     "panel": "Panell",
-    "settings": "Ajustes"
+    "settings": "Ajustes",
+    "noCompanies": "Sense empreses"
   },
   "shell": {
     "brandSubtitle": "Gestió VTC · Taxi",
@@ -570,13 +571,81 @@
     "inactiveStatus": "Inactiva",
     "activeDrivers": "({count} actius)"
   },
+  "conductoresPage": {
+    "profileDescription": "Fitxa del conductor",
+    "profileTitle": "Fitxa — {name}",
+    "editDriver": "Editar conductor",
+    "notFound": "No trobat o sense accés (un altre tenant)."
+  },
+  "empresasPage": {
+    "profileDescription": "Fitxa d'empresa",
+    "fullProfileDescription": "Fitxa completa d'empresa",
+    "editCompany": "Editar empresa",
+    "notFound": "Empresa no trobada o sense accés."
+  },
   "dashboard": {
     "description": "Resum operatiu del dia — KPIs, ingressos i rànquing de conductors.",
     "dbUnavailable": "Base de dades: no disponible.",
+    "dbSummary": "Base de dades: {drivers} conductors · {companies} empreses · {users} usuaris.",
     "limitedScope": "Vista limitada a les teves empreses assignades.",
     "revenueChartTitle": "Evolució d'ingressos — últims 14 dies",
     "revenueChartSubtitle": "Brut diari (viatges tancats)",
-    "alertsPanel": "Panell d'alertes"
+    "alertsPanel": "Panell d'alertes",
+    "kpis": {
+      "activeDriversToday": "Conductors actius avui",
+      "activeDriversTodayHint": "de {total} en plantilla · torn amb inici avui",
+      "activeDriversTodayHintNoRoster": "sense plantilla",
+      "openShiftsNow": "Torns actius ara",
+      "openShiftsNowHint": "torn obert · pendents després d'últim tancament avui",
+      "connectedNow": "Connectats ara",
+      "connectedNowHintApi": "Uber en línia (API) · finestra 2 h",
+      "connectedNowHintMixed": "Uber API + activitat FreeNow · 2 h",
+      "connectedNowHintTrips": "activitat de viatges · últimes 2 h",
+      "connectedNowHintNone": "sincronitza Uber/FreeNow per a estat en viu",
+      "dayBilling": "Facturació del dia",
+      "dayBillingHint": "import brut acumulat · tancats avui",
+      "tripsToday": "Viatges realitzats",
+      "tripsTodayHint": "Uber + FreeNow · tancats avui",
+      "pendingShifts": "Torns pendents",
+      "pendingShiftsHint": "sense liquidar · igual que Tancar torns",
+      "alerts": "Avísos",
+      "alertsHintOk": "pagaments confirmats · Tancar torns",
+      "alertsHintPending": "forma de pagament sense confirmar · Tancar torns",
+      "review": "Revisar"
+    },
+    "topDrivers": {
+      "title": "Top 5 conductors",
+      "periodLabel": "Període",
+      "periodAria": "Període del rànquing",
+      "periodToday": "Avui",
+      "periodWeek": "7 dies",
+      "periodMonth": "Mes",
+      "subtitleToday": "avui · import brut facturat",
+      "subtitleWeek": "darrers 7 dies · import brut facturat",
+      "subtitleMonth": "mes en curs · import brut facturat",
+      "emptyToday": "Sense viatges tancats avui per mostrar rànquing.",
+      "emptyWeek": "Sense viatges tancats en els darrers 7 dies.",
+      "emptyMonth": "Sense viatges tancats en el mes en curs."
+    },
+    "alerts": {
+      "paymentUnvalidatedTitle": "Pagaments sense confirmar",
+      "paymentUnvalidatedDesc": "{count} viatge(s) amb forma de pagament pendent o descuadrat a Tancar torns.",
+      "pendingShiftsTitle": "Torns pendents de tancament",
+      "pendingShiftsDesc": "{count} viatge(s) sense liquidar avui.",
+      "productivityLowTitle": "Conductors sota llindar de productivitat",
+      "productivityWarnTitle": "Productivitat en revisió",
+      "allClearTitle": "Sense alertes operatives",
+      "allClearDesc": "No hi ha pagaments sense confirmar, torns pendents avui, sync al dia ni conductors sota llindar crític aquest mes."
+    },
+    "email": {
+      "send": "Enviar resum per email",
+      "sending": "Enviant…",
+      "noAlerts": "No hi ha alertes per enviar.",
+      "noAlertsShort": "Sense alertes",
+      "sendError": "No s'ha pogut enviar el resum",
+      "sendSuccess": "Resum enviat a {count} gestor(s).",
+      "smtpMissing": "Configura SMTP_USER i SMTP_PASS al servidor"
+    }
   },
   "turnos": {
     "cerrar": "Tancar torns",
@@ -587,7 +656,7 @@
     "pendingSettlement": "Pendents de liquidació en caixa",
     "configDescription": "Ajustes del tenant — {name}",
     "helpIntro": "Viatges pendents de liquidar. El tancament marca els viatges del conductor com tancats. La llista s'actualitza sola cada 90 s; use Actualitzar llista després de sincronitzar plataformes.",
-    "helpAvisos": "Avísos = viatges amb tipus de pagament sense confirmar.",
+    "helpAvisos": "Avísos = viatges amb tipus de pagament sense confirmar o desglossament descuadrat.",
     "searchConductor": "Cercar conductor…",
     "filterPlatform": "Filtrar per plataforma",
     "allPlatforms": "Totes les plataformes",
@@ -611,6 +680,7 @@
     "shiftClosedShort": "Torn tancat",
     "noTripsToClose": "No hi ha viatges pendents de tancar en aquesta fila.",
     "settlementError": "No s'ha pogut calcular la liquidació",
+    "settlementTimeout": "La liquidació ha trigat massa. Torneu-ho a provar o tanqueu només la franja del dia.",
     "connectionErrorPrepare": "Error de connexió en preparar el tancament.",
     "closeError": "No s'ha pogut tancar el torn",
     "closeSuccess": "Torn tancat correctament.",
@@ -666,6 +736,7 @@
     "turnoCerrado": "Torn tancat en plataforma · viatges sense liquidar",
     "columns": {
       "platforms": "Plataformes",
+      "fechaCierre": "Data tancament",
       "conductor": "Conductor",
       "viajes": "Viatges",
       "total": "Import total",
@@ -693,6 +764,7 @@
       "pendingPlatformTitle": "{conductor} — Detall del torn ({platform})",
       "closedPlatformTitle": "{conductor} — {platform} | {range}",
       "sheetDetail": "Detall",
+      "shiftSummaryAria": "Resum del torn",
       "tripsCount": "{platform} — {count} viatges",
       "tripsWithWarning": "{count} viatges amb avís",
       "tripsPlain": "{count} viatges",
@@ -938,13 +1010,13 @@
     }
   },
   "apps": {
-    "pageDescription": "Activitat de conductors · Avui",
+    "pageDescription": "Activitat d'avui per plataforma (viatges tancats i arracades).",
     "searchPlaceholder": "Cercar conductor o empresa…",
     "filterProductivity": "Filtrar productivitat",
     "allLevels": "Tots els nivells",
     "optimal": "Òptim",
-    "medium": "Mig",
-    "low": "Baix llindar",
+    "medium": "Mitjà",
+    "low": "Baix",
     "connectionOnline": "Actiu (connectat o torn obert)",
     "connectionOffline": "Inactiu (sense torn obert avui)",
     "connectionUnknown": "Sense activitat avui en aquesta plataforma",
@@ -1280,7 +1352,7 @@
     },
     "pages": {
       "companies": {
-        "allCompanies": "Todas las empresas",
+        "allCompanies": "Totes les empreses",
         "documentsIntro": "Documentació legal retenida tras baja.",
         "documentsSection": "Documentos",
         "driversAssociated": "Conductores asociados",

@@ -167,9 +167,9 @@
     @apply whitespace-nowrap px-3 py-1.5 first:pl-4;
   }
 
-  /* Sticky table headers (Excel-style freeze) while scrolling */
+  /* Sticky table headers (Excel-style freeze) while scrolling — z-10 keeps navbar dropdowns on top */
   .vui-table-sticky-head th {
-    @apply sticky z-20 bg-zinc-50;
+    @apply sticky z-10 bg-zinc-50;
   }
 
   .vui-table-head.vui-table-sticky-head th {

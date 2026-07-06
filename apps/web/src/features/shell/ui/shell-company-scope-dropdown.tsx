@@ -9,12 +9,14 @@ import {
   formatCompanyScopeCookie,
 } from "@/features/shell/lib/company-scope-cookie";
 import { useCompanyScopeOptions } from "@/features/shell/ui/company-scope-provider";
+import { useTranslations } from "@/shared/i18n/i18n-provider";
 
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 180; // 180 days
 
 export function ShellCompanyScopeDropdown() {
   const router = useRouter();
   const pathname = usePathname();
+  const { t } = useTranslations();
   const { tenantId, companies, initialSelectedId, showFilter } = useCompanyScopeOptions();
   const [open, setOpen] = useState(false);
   const [selectedId, setSelectedId] = useState(initialSelectedId);
@@ -23,10 +25,10 @@ export function ShellCompanyScopeDropdown() {
   const options = useMemo(() => {
     if (!showFilter) return [];
     return [
-      { id: COMPANY_SCOPE_ALL, label: "Todas las empresas" },
+      { id: COMPANY_SCOPE_ALL, label: t("billing.allCompanies") },
       ...companies,
     ];
-  }, [companies, showFilter]);
+  }, [companies, showFilter, t]);
 
   useEffect(() => {
     setSelectedId(initialSelectedId);
@@ -40,8 +42,8 @@ export function ShellCompanyScopeDropdown() {
     if (!showFilter && companies.length === 1) {
       return companies[0]!;
     }
-    return options.find((o) => o.id === selectedId) ?? options[0] ?? { id: COMPANY_SCOPE_ALL, label: "Empresas" };
-  }, [companies, options, selectedId, showFilter]);
+    return options.find((o) => o.id === selectedId) ?? options[0] ?? { id: COMPANY_SCOPE_ALL, label: t("nav.empresas") };
+  }, [companies, options, selectedId, showFilter, t]);
 
   useEffect(() => {
     if (!open) return;
@@ -83,7 +85,7 @@ export function ShellCompanyScopeDropdown() {
   }
 
   return (
-    <div ref={rootRef} className="relative z-20">
+    <div ref={rootRef} className="relative">
       <button
         type="button"
         aria-haspopup="listbox"

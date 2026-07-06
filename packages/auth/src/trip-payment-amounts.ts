@@ -182,34 +182,67 @@ function scalePaymentBucketsToImporte(
   return { app, cash, card };
 }
 
+function assignGrossToPrimaryBucket(
+  gross: bigint,
+  trip: TripPaymentAmountsInput,
+): TripPaymentAmounts {
+  const bucket = classifyPaymentMethod(trip.paymentMethod);
+  if (bucket === "cash") return { app: BigInt(0), cash: gross, card: BigInt(0) };
+  if (bucket === "card") return { app: BigInt(0), cash: BigInt(0), card: gross };
+  return { app: gross, cash: BigInt(0), card: BigInt(0) };
+}
+
+/** Ensures app + cash + card === gross for billing / detalle tables. */
+function reconcileDisplayToGross(
+  gross: bigint,
+  trip: TripPaymentAmountsInput,
+  amounts: TripPaymentAmounts,
+): TripPaymentAmounts {
+  if (gross <= BigInt(0)) return amounts;
+
+  const sum = amounts.app + amounts.cash + amounts.card;
+  if (sum === gross) return amounts;
+  if (sum <= BigInt(0)) return assignGrossToPrimaryBucket(gross, trip);
+  if (sum > gross) return scalePaymentBucketsToImporte(gross, amounts, sum);
+
+  const diff = gross - sum;
+  const mode = derivePaymentEditMode(trip);
+  if (mode === "cash") return { ...amounts, cash: amounts.cash + diff };
+  if (mode === "card") return { ...amounts, card: amounts.card + diff };
+  if (mode === "mixed") {
+    if (amounts.cash > BigInt(0)) return { ...amounts, cash: amounts.cash + diff };
+    if (amounts.card > BigInt(0)) return { ...amounts, card: amounts.card + diff };
+  }
+  return { ...amounts, app: amounts.app + diff };
+}
+
 export function resolveTripPaymentDisplayAmounts(
   trip: TripPaymentAmountsInput & {
     grossAmountCents?: bigint | null;
   },
 ): TripPaymentAmounts {
   const gross = tripGrossCents(trip);
-  const net = netCents(trip);
   const split = resolveTripPaymentAmounts(trip);
   const splitSum = split.app + split.cash + split.card;
 
-  if (gross <= BigInt(0) || splitSum <= BigInt(0)) {
+  if (gross <= BigInt(0)) {
     return split;
   }
 
-  // Uber: ganancias (net) may exceed fare (gross) when tips are in net but listed separately.
-  if (net > gross && splitSum > gross) {
-    return scalePaymentBucketsToImporte(gross, split, splitSum);
+  if (splitSum <= BigInt(0)) {
+    return assignGrossToPrimaryBucket(gross, trip);
   }
 
-  if (net <= BigInt(0)) {
-    return splitSum > gross ? scalePaymentBucketsToImporte(gross, split, splitSum) : split;
+  if (splitSum === gross) {
+    return reconcileDisplayToGross(gross, trip, split);
   }
 
-  if (gross <= net) {
-    return split;
+  const net = netCents(trip);
+  let basis = net > BigInt(0) ? net : splitSum;
+  if (splitSum > basis) {
+    basis = splitSum;
   }
-
-  return scalePaymentBucketsToImporte(gross, split, net);
+  return reconcileDisplayToGross(gross, trip, scalePaymentBucketsToImporte(gross, split, basis));
 }
 
 /** Reparte neto proporcionalmente cuando el operador reparte el importe bruto. */

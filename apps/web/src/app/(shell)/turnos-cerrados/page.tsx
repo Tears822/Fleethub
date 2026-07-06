@@ -15,7 +15,7 @@ import { ExportFileButton } from "@/shared/ui/export-file-button";
 export default async function TurnosCerradosPage({
   searchParams,
 }: {
-  searchParams: Promise<{ from?: string; to?: string; shift?: string }>;
+  searchParams: Promise<{ from?: string; to?: string; shift?: string; driver?: string }>;
 }) {
   const session = await requireTenantSession();
   const { t } = await getSessionTranslator(session);
@@ -58,6 +58,7 @@ export default async function TurnosCerradosPage({
         dateFrom={range.dateFromEs}
         dateTo={range.dateToEs}
         initialOpenShiftKey={sp.shift?.trim() || undefined}
+        initialDriverId={sp.driver?.trim() || undefined}
         canExportCsv={canExportTenantData(session.role)}
         canExportExcel={canExportTenantData(session.role)}
         canRevertClose={Boolean(session.impersonating)}

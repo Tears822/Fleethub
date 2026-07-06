@@ -1,12 +1,14 @@
 "use client";
 
-import type { ShiftTableRow } from "@/features/shifts/ui/cerrar-turnos-types";
+import type { ClosedShiftRow, ShiftTableRow } from "@/features/shifts/ui/cerrar-turnos-types";
+import { closedShiftSortTimestamp } from "@/features/shifts/lib/closed-shift-sort";
 import { parseEuroCell } from "@/features/billing/lib/facturacion-mock-format";
 import { compareNumbers, compareStrings, useTableSort } from "@/shared/lib/table-sort";
 import { VuiSortableTh } from "@/shared/ui/vui-sortable-th";
 import { useOptionalTranslations } from "@/shared/i18n/i18n-provider";
 
 export type ShiftSortKey =
+  | "fecha"
   | "conductor"
   | "viajes"
   | "total"
@@ -21,6 +23,12 @@ export type ShiftSortKey =
   | "avisos";
 
 const SHIFT_SORT_COMPARATORS = {
+  fecha: (a: ShiftTableRow, b: ShiftTableRow, d) =>
+    compareNumbers(
+      closedShiftSortTimestamp(a as ClosedShiftRow),
+      closedShiftSortTimestamp(b as ClosedShiftRow),
+      d,
+    ),
   conductor: (a: ShiftTableRow, b: ShiftTableRow, d) =>
     compareStrings(a.conductor, b.conductor, d),
   viajes: (a, b, d) => compareNumbers(a.viajes, b.viajes, d),
@@ -52,10 +60,21 @@ export function useShiftTableSort<T extends ShiftTableRow>(rows: T[]) {
   return useTableSort<ShiftSortKey, T>(rows, "total", "desc", SHIFT_SORT_COMPARATORS);
 }
 
+export function useClosedShiftTableSort<T extends ShiftTableRow & ClosedShiftRow>(rows: T[]) {
+  return useTableSort<ShiftSortKey, T>(
+    rows,
+    "fecha",
+    "desc",
+    SHIFT_SORT_COMPARATORS,
+    { fecha: "desc" },
+  );
+}
+
 type HeadProps = {
   dirFor: (key: ShiftSortKey) => import("@/shared/lib/table-sort").SortDir | null;
   toggle: (key: ShiftSortKey) => void;
   showAvisos?: boolean;
+  showClosedDate?: boolean;
   actionsLabel?: string;
 };
 
@@ -63,6 +82,7 @@ export function ShiftMetricsSortableHead({
   dirFor,
   toggle,
   showAvisos = false,
+  showClosedDate = false,
   actionsLabel,
 }: HeadProps) {
   const { t } = useOptionalTranslations();
@@ -70,6 +90,14 @@ export function ShiftMetricsSortableHead({
   return (
     <tr>
       <th className="w-0 whitespace-nowrap">{t("turnos.columns.platforms")}</th>
+      {showClosedDate ? (
+        <VuiSortableTh
+          label={t("turnos.columns.fechaCierre")}
+          className="whitespace-nowrap tabular-nums"
+          activeDir={dirFor("fecha")}
+          onSort={() => toggle("fecha")}
+        />
+      ) : null}
       <VuiSortableTh
         label={t("turnos.columns.conductor")}
         className="min-w-[10rem] max-w-[14rem]"

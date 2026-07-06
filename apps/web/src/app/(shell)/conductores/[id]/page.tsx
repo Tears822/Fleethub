@@ -28,14 +28,14 @@ export default async function ConductoresDetallePage({
     return (
       <ShellPage
         title={t("nav.conductores")}
-        description="Ficha del conductor"
+        description={t("conductoresPage.profileDescription")}
         actions={
           <Link href="/conductores" className="erp-btn-outline text-xs">
-            ← Volver al listado
+            {t("common.backToList")}
           </Link>
         }
       >
-        <p className="text-sm text-zinc-600">No encontrado o sin acceso (otro tenant).</p>
+        <p className="text-sm text-zinc-600">{t("conductoresPage.notFound")}</p>
       </ShellPage>
     );
   }
@@ -64,15 +64,15 @@ export default async function ConductoresDetallePage({
   return (
     <ShellPage
       title={t("nav.conductores")}
-      description={`Ficha — ${driver.fullName}`}
+      description={t("conductoresPage.profileTitle", { name: driver.fullName })}
       actions={
         <>
           <Link href="/conductores" className="erp-btn-outline text-xs">
-            ← Volver al listado
+            {t("common.backToList")}
           </Link>
           {canManageDrivers(session.role) ? (
             <Link href={`/conductores/${id}/editar`} className="erp-btn-success text-xs">
-              Editar conductor
+              {t("conductoresPage.editDriver")}
             </Link>
           ) : null}
         </>

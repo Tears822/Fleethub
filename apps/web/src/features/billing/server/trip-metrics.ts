@@ -6,7 +6,7 @@ import { isCollectiblePaymentTrip } from "@fleethub/auth/trip-payment-buckets";
 import {
   resolveTripPaymentDisplayAmounts,
   tripGrossCents,
-  tripNeedsManualPaymentReview,
+  tripNeedsPaymentUiAttention,
 } from "@fleethub/auth/trip-payment-amounts";
 import { tenantCalendarDayKey } from "@fleethub/auth/display-timezone";
 import {
@@ -118,7 +118,7 @@ export function addTripToAgg(
     netAmountCents: trip.netAmountCents,
     tipCents: trip.tipCents,
   });
-  if (tripNeedsManualPaymentReview(trip)) {
+  if (tripNeedsPaymentUiAttention(trip)) {
     agg.paymentAlertCount += 1;
   }
   agg.platforms.add(trip.platform);

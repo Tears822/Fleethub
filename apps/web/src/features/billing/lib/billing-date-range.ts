@@ -133,21 +133,6 @@ export function monthRangeEs(year: number, monthIndex: number): {
   };
 }
 
-const MONTH_LABELS = [
-  "Enero",
-  "Febrero",
-  "Marzo",
-  "Abril",
-  "Mayo",
-  "Junio",
-  "Julio",
-  "Agosto",
-  "Septiembre",
-  "Octubre",
-  "Noviembre",
-  "Diciembre",
-] as const;
-
 export type BillingMonthOption = {
   key: string;
   label: string;
@@ -156,13 +141,22 @@ export type BillingMonthOption = {
   toEs: string;
 };
 
+function monthLabelForIndex(monthIndex: number, locale: string): string {
+  const d = new Date(2026, monthIndex, 1);
+  return new Intl.DateTimeFormat(locale === "ca" ? "ca-ES" : "es-ES", { month: "long" }).format(d);
+}
+
 /** Últimos 12 meses naturales para el desplegable «mes rápido». */
-export function billingMonthQuickOptions(reference = new Date()): BillingMonthOption[] {
+export function billingMonthQuickOptions(
+  reference = new Date(),
+  locale = "es",
+): BillingMonthOption[] {
   const options: BillingMonthOption[] = [];
   for (let i = 0; i < 12; i++) {
     const d = new Date(reference.getFullYear(), reference.getMonth() - i, 1);
     const { fromEs, toEs, query } = monthRangeEs(d.getFullYear(), d.getMonth());
-    const label = `${MONTH_LABELS[d.getMonth()]} ${d.getFullYear()}`;
+    const monthName = monthLabelForIndex(d.getMonth(), locale);
+    const label = `${monthName.charAt(0).toUpperCase()}${monthName.slice(1)} ${d.getFullYear()}`;
     options.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label, query, fromEs, toEs });
   }
   return options;

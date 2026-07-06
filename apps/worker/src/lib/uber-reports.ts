@@ -7,12 +7,12 @@ import {
   filterPaymentsDriverRows,
   tripsInWindowMissingAmounts,
 } from "./uber-payments-driver-mapper.js";
+import type { UberOrgRef } from "./uber-tenant-org-map.js";
 import {
   orderUberOrgIds,
   persistDriverUberSyncOrgId,
   resolveTenantUberOrgIds,
   uberSyncOrgIdFromMetadata,
-  type UberOrgRef,
 } from "./uber-tenant-group-orgs.js";
 import { mergeUberDriverTripUpserts } from "./uber-driver-mappers.js";
 import { paymentsDriverReportIsTripLevel } from "./uber-csv-columns.js";
@@ -395,29 +395,50 @@ export async function prefetchUberOrgReports(
   tenantId: string,
   from: Date,
   to: Date,
+  options?: {
+    /** Limit prefetch to specific orgs (liquidation / poll optimization). */
+    orgs?: UberOrgRef[];
+    /** Resolve org subset from driver platform account metadata. */
+    narrowDpas?: { metadata: unknown }[];
+    /** Poll: only orgs linked to active Uber drivers in DB. */
+    pollMode?: boolean;
+    /** Skip payments report on prefetch (faster liquidation sync). */
+    tripActivityOnly?: boolean;
+  },
 ): Promise<void> {
-  const orgs = await resolveTenantUberOrgIds(tenantId);
-  if (!orgs.ok) {
-    console.warn("[uber] prefetch reports:", orgs.message);
-    return;
+  let orgsToFetch = options?.orgs;
+  if (!orgsToFetch) {
+    const { resolveUberPrefetchOrgs } = await import("./uber-prefetch-orgs.js");
+    orgsToFetch = await resolveUberPrefetchOrgs(tenantId, {
+      narrowDpas: options?.narrowDpas,
+      pollMode: options?.pollMode,
+    });
+  }
+  if (orgsToFetch.length === 0) {
+    const orgs = await resolveTenantUberOrgIds(tenantId);
+    if (!orgs.ok) {
+      console.warn("[uber] prefetch reports:", orgs.message);
+      return;
+    }
+    orgsToFetch = orgs.data;
   }
 
-  for (let i = 0; i < orgs.data.length; i++) {
+  for (let i = 0; i < orgsToFetch.length; i++) {
     if (i > 0) {
       console.log(
         `[uber] waiting ${REPORT_RATE_LIMIT_MS / 1000}s before next org report (rate limit)…`,
       );
       await sleepWithSyncHeartbeat(REPORT_RATE_LIMIT_MS);
     }
-    const org = orgs.data[i]!;
+    const org = orgsToFetch[i]!;
     await fetchUberTripActivityRows(org.orgId, from, to);
-    if (syncPaymentsOrderReport()) {
+    if (syncPaymentsOrderReport() && !options?.tripActivityOnly) {
       await fetchUberPaymentsOrderRows(org.orgId, from, to);
     }
   }
 
-  if (orgs.data.length > 1) {
-    console.log(`[uber] prefetched reports for ${orgs.data.length} org(s).`);
+  if (orgsToFetch.length > 1) {
+    console.log(`[uber] prefetched reports for ${orgsToFetch.length} org(s).`);
   }
 }
 
@@ -544,9 +565,9 @@ export async function syncUberTripsViaReports(args: {
   }
 
   const preferred = preferredOrgId ? orgOrder.find((o) => o.orgId === preferredOrgId) : undefined;
-  const scanOrder = preferred
-    ? [preferred, ...orgOrder.filter((o) => o.orgId !== preferred.orgId)]
-    : orgOrder;
+  /** When driver has uberSyncOrgId, trust it — avoid scanning the full umbrella every poll. */
+  const scanOrder =
+    preferred != null ? [preferred] : orgOrder;
 
   for (let i = 0; i < scanOrder.length; i++) {
     const org = scanOrder[i]!;

@@ -178,6 +178,7 @@ export function CerrarTurnosMockView({
           credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(body),
+          signal: AbortSignal.timeout(90_000),
         });
         const preview = (await previewRes.json()) as LiquidationPreviewDto & { error?: string };
         if (!previewRes.ok) {
@@ -232,8 +233,12 @@ export function CerrarTurnosMockView({
           setRows((current) => current.filter((r) => r.driverId !== row.driverId));
         }
         router.refresh();
-      } catch {
-        toast.error(t("turnos.closeConnectionError"));
+      } catch (err) {
+        if (err instanceof DOMException && err.name === "TimeoutError") {
+          toast.error(t("turnos.settlementTimeout"));
+        } else {
+          toast.error(t("turnos.closeConnectionError"));
+        }
       } finally {
         setClosingDriverId(null);
       }

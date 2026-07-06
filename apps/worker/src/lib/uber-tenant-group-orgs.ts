@@ -5,9 +5,11 @@ import { withTenant } from "@fleethub/db";
 import { normalizeCompanyMatchKey } from "./freenow-company-map.js";
 import {
   defaultUberOrgForTenantSlug,
-  type UberOrgRef,
   UBER_ORG_NAME_ALIASES,
+  type UberOrgRef,
 } from "./uber-tenant-org-map.js";
+
+export type { UberOrgRef };
 import { listUberOrganizations, resolveUberOrgId, type UberFleetResult } from "./uber-fleet-client.js";
 import { resolveTenantUberOrgId } from "./tenant-platform-config.js";
 

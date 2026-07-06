@@ -1,6 +1,9 @@
+"use client";
+
 import type { PlatformShiftMetrics } from "@/features/shifts/ui/cerrar-turnos-types";
 import type { ReactNode } from "react";
 import { parseEuroCell } from "@/features/billing/lib/facturacion-mock-format";
+import { useTranslations } from "@/shared/i18n/i18n-provider";
 
 const METRIC_CELL =
   "whitespace-nowrap tabular-nums text-right text-zinc-800 [&:has(button)]:text-left [&:has(select)]:text-left";
@@ -85,21 +88,22 @@ export function ShiftMetricsSummaryStrip({
   metrics: PlatformShiftMetrics;
   showAvisos?: boolean;
 }) {
+  const { t } = useTranslations();
   const items: SummaryItem[] = [
-    { label: SHIFT_METRIC_LABELS.viajes, value: metrics.viajes },
-    { label: SHIFT_METRIC_LABELS.total, value: metrics.total, emphasis: true },
-    { label: SHIFT_METRIC_LABELS.taximetro, value: displayTaximetro(metrics) },
-    { label: SHIFT_METRIC_LABELS.t3, value: metrics.t3 },
-    { label: SHIFT_METRIC_LABELS.app, value: metrics.app },
-    { label: SHIFT_METRIC_LABELS.efectivo, value: metrics.efectivo },
-    { label: SHIFT_METRIC_LABELS.tarjetas, value: metrics.tarjetas },
-    { label: SHIFT_METRIC_LABELS.propinas, value: metrics.propinas },
-    { label: SHIFT_METRIC_LABELS.primas, value: metrics.primas },
-    { label: SHIFT_METRIC_LABELS.peajes, value: metrics.peajes },
+    { label: t("turnos.columns.viajes"), value: metrics.viajes },
+    { label: t("turnos.columns.total"), value: metrics.total, emphasis: true },
+    { label: t("turnos.columns.taximetro"), value: displayTaximetro(metrics) },
+    { label: t("turnos.columns.t3"), value: metrics.t3 },
+    { label: t("turnos.columns.app"), value: metrics.app },
+    { label: t("turnos.columns.efectivo"), value: metrics.efectivo },
+    { label: t("turnos.columns.tarjetas"), value: metrics.tarjetas },
+    { label: t("turnos.columns.propinas"), value: metrics.propinas },
+    { label: t("turnos.columns.primas"), value: metrics.primas },
+    { label: t("turnos.columns.peajes"), value: metrics.peajes },
   ];
   if (showAvisos) {
     items.push({
-      label: SHIFT_METRIC_LABELS.avisos,
+      label: t("turnos.columns.avisos"),
       value:
         (metrics.avisos ?? 0) > 0 ? (
           <span className="inline-flex min-w-[1.5rem] justify-center rounded-md bg-red-50 px-2 py-0.5 text-xs font-bold text-red-700 ring-1 ring-red-200">
@@ -114,7 +118,7 @@ export function ShiftMetricsSummaryStrip({
   return (
     <div
       className="flex flex-wrap items-end gap-x-5 gap-y-2 border-b border-zinc-200 bg-zinc-50 px-4 py-2.5"
-      aria-label="Resumen del turno"
+      aria-label={t("turnos.detail.shiftSummaryAria")}
     >
       {items.map((item) => (
         <div key={item.label} className="min-w-[4.5rem] text-right">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import type { ClosedShiftRow } from "@/features/shifts/ui/cerrar-turnos-types";
 import { shiftRowKey } from "@/features/shifts/ui/cerrar-turnos-types";
+import { turnosCerradosHref } from "@/features/shifts/lib/turnos-cerrados-url";
 import { platformSlugsFromRow } from "@/features/shifts/lib/shift-platform";
 import { useTranslations } from "@/shared/i18n/i18n-provider";
 import { ShiftPlatformDots } from "@/shared/ui/shift-platform-dots";
@@ -11,18 +12,14 @@ import { VuiTableShell } from "@/shared/ui/vui-table-shell";
 import { Eye } from "lucide-react";
 import {
   ShiftMetricsSortableHead,
-  useShiftTableSort,
+  useClosedShiftTableSort,
 } from "@/features/shifts/ui/shift-metrics-sortable-head";
+import { formatClosedShiftDateCell } from "@/features/shifts/lib/closed-shift-sort";
 import { displayTaximetro } from "@/features/shifts/ui/shift-metrics-cells";
-
-function turnosCerradosHref(row: ClosedShiftRow): string {
-  const params = new URLSearchParams({ shift: shiftRowKey(row) });
-  return `/turnos-cerrados?${params.toString()}`;
-}
 
 export function DriverTurnosCerradosTab({ rows }: { rows: ClosedShiftRow[] }) {
   const { t } = useTranslations();
-  const { sortedRows: displayRows, toggle: toggleSort, dirFor } = useShiftTableSort(rows);
+  const { sortedRows: displayRows, toggle: toggleSort, dirFor } = useClosedShiftTableSort(rows);
 
   if (rows.length === 0) {
     return (
@@ -39,7 +36,12 @@ export function DriverTurnosCerradosTab({ rows }: { rows: ClosedShiftRow[] }) {
       <VuiTableShell className="mt-4 overflow-x-auto">
         <table className="w-full min-w-[1024px] text-left text-sm">
           <thead className="vui-table-head">
-            <ShiftMetricsSortableHead dirFor={dirFor} toggle={toggleSort} actionsLabel="" />
+            <ShiftMetricsSortableHead
+              dirFor={dirFor}
+              toggle={toggleSort}
+              showClosedDate
+              actionsLabel=""
+            />
           </thead>
           <tbody>
             {displayRows.map((r) => {
@@ -51,6 +53,11 @@ export function DriverTurnosCerradosTab({ rows }: { rows: ClosedShiftRow[] }) {
                       <ShiftPlatformDots
                         slugs={platformSlugsFromRow(r.plataformas, r.desglose)}
                       />
+                    </Link>
+                  </td>
+                  <td className="whitespace-nowrap text-[11px] tabular-nums text-zinc-700">
+                    <Link href={href} className="block py-1">
+                      {formatClosedShiftDateCell(r)}
                     </Link>
                   </td>
                   <td>

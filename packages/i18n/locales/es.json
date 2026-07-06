@@ -35,7 +35,8 @@
     "success": "Operación completada",
     "apiConnectionError": "No se pudo conectar con el API.",
     "panel": "Panel",
-    "settings": "Ajustes"
+    "settings": "Ajustes",
+    "noCompanies": "Sin empresas"
   },
   "shell": {
     "brandSubtitle": "Gestión VTC · Taxi",
@@ -570,13 +571,81 @@
     "inactiveStatus": "Inactiva",
     "activeDrivers": "({count} activos)"
   },
+  "conductoresPage": {
+    "profileDescription": "Ficha del conductor",
+    "profileTitle": "Ficha — {name}",
+    "editDriver": "Editar conductor",
+    "notFound": "No encontrado o sin acceso (otro tenant)."
+  },
+  "empresasPage": {
+    "profileDescription": "Ficha de empresa",
+    "fullProfileDescription": "Ficha completa de empresa",
+    "editCompany": "Editar empresa",
+    "notFound": "Empresa no encontrada o sin acceso."
+  },
   "dashboard": {
     "description": "Resumen operativo del día — KPIs, ingresos y ranking de conductores.",
     "dbUnavailable": "Base de datos: no disponible.",
+    "dbSummary": "Base de datos: {drivers} conductores · {companies} empresas · {users} usuarios.",
     "limitedScope": "Vista limitada a tus empresas asignadas.",
     "revenueChartTitle": "Evolución de ingresos — últimos 14 días",
     "revenueChartSubtitle": "Bruto diario (viajes cerrados)",
-    "alertsPanel": "Panel de alertas"
+    "alertsPanel": "Panel de alertas",
+    "kpis": {
+      "activeDriversToday": "Conductores activos hoy",
+      "activeDriversTodayHint": "de {total} en plantilla · turno con inicio hoy",
+      "activeDriversTodayHintNoRoster": "sin plantilla",
+      "openShiftsNow": "Turnos activos ahora",
+      "openShiftsNowHint": "turno abierto · pendientes tras último cierre hoy",
+      "connectedNow": "Conectados ahora",
+      "connectedNowHintApi": "Uber en línea (API) · ventana 2 h",
+      "connectedNowHintMixed": "Uber API + actividad FreeNow · 2 h",
+      "connectedNowHintTrips": "actividad de viajes · últimas 2 h",
+      "connectedNowHintNone": "sincroniza Uber/FreeNow para estado en vivo",
+      "dayBilling": "Facturación del día",
+      "dayBillingHint": "importe bruto acumulado · cerrados hoy",
+      "tripsToday": "Viajes realizados",
+      "tripsTodayHint": "Uber + FreeNow · cerrados hoy",
+      "pendingShifts": "Turnos pendientes",
+      "pendingShiftsHint": "sin liquidar · igual que Cerrar turnos",
+      "alerts": "Avisos",
+      "alertsHintOk": "pagos confirmados · Cerrar turnos",
+      "alertsHintPending": "forma de pago sin confirmar · Cerrar turnos",
+      "review": "Revisar"
+    },
+    "topDrivers": {
+      "title": "Top 5 conductores",
+      "periodLabel": "Periodo",
+      "periodAria": "Periodo del ranking",
+      "periodToday": "Hoy",
+      "periodWeek": "7 días",
+      "periodMonth": "Mes",
+      "subtitleToday": "hoy · importe bruto facturado",
+      "subtitleWeek": "últimos 7 días · importe bruto facturado",
+      "subtitleMonth": "mes en curso · importe bruto facturado",
+      "emptyToday": "Sin viajes cerrados hoy para mostrar ranking.",
+      "emptyWeek": "Sin viajes cerrados en los últimos 7 días.",
+      "emptyMonth": "Sin viajes cerrados en el mes en curso."
+    },
+    "alerts": {
+      "paymentUnvalidatedTitle": "Pagos sin confirmar",
+      "paymentUnvalidatedDesc": "{count} viaje(s) con forma de pago pendiente o descuadrado en Cerrar turnos.",
+      "pendingShiftsTitle": "Turnos pendientes de cierre",
+      "pendingShiftsDesc": "{count} viaje(s) sin liquidar hoy.",
+      "productivityLowTitle": "Conductores bajo umbral de productividad",
+      "productivityWarnTitle": "Productividad en revisión",
+      "allClearTitle": "Sin alertas operativas",
+      "allClearDesc": "No hay pagos sin confirmar, turnos pendientes hoy, sync al día ni conductores bajo umbral crítico este mes."
+    },
+    "email": {
+      "send": "Enviar resumen por email",
+      "sending": "Enviando…",
+      "noAlerts": "No hay alertas para enviar.",
+      "noAlertsShort": "Sin alertas",
+      "sendError": "No se pudo enviar el resumen",
+      "sendSuccess": "Resumen enviado a {count} gestor(es).",
+      "smtpMissing": "Configura SMTP_USER y SMTP_PASS en el servidor"
+    }
   },
   "turnos": {
     "cerrar": "Cerrar turnos",
@@ -587,7 +656,7 @@
     "pendingSettlement": "Pendientes de liquidación en caja",
     "configDescription": "Ajustes del tenant — {name}",
     "helpIntro": "Viajes pendientes de liquidar. El cierre marca los viajes del conductor como cerrado. La lista se actualiza sola cada 90 s; use Actualizar lista tras sincronizar plataformas.",
-    "helpAvisos": "Avisos = viajes con tipo de pago sin confirmar.",
+    "helpAvisos": "Avisos = viajes con tipo de pago sin confirmar o desglose descuadrado.",
     "searchConductor": "Buscar conductor…",
     "filterPlatform": "Filtrar por plataforma",
     "allPlatforms": "Todas las plataformas",
@@ -611,6 +680,7 @@
     "shiftClosedShort": "Turno cerrado",
     "noTripsToClose": "No hay viajes pendientes para cerrar en esta fila.",
     "settlementError": "No se pudo calcular la liquidación",
+    "settlementTimeout": "La liquidación tardó demasiado. Inténtelo de nuevo o cierre solo la franja del día.",
     "connectionErrorPrepare": "Error de conexión al preparar el cierre.",
     "closeError": "No se pudo cerrar el turno",
     "closeSuccess": "Turno cerrado correctamente.",
@@ -666,6 +736,7 @@
     "turnoCerrado": "Turno cerrado en plataforma · viajes sin liquidar",
     "columns": {
       "platforms": "Plataformas",
+      "fechaCierre": "Fecha cierre",
       "conductor": "Conductor",
       "viajes": "Viajes",
       "total": "Importe total",
@@ -693,6 +764,7 @@
       "pendingPlatformTitle": "{conductor} — Detalle del turno ({platform})",
       "closedPlatformTitle": "{conductor} — {platform} | {range}",
       "sheetDetail": "Detalle",
+      "shiftSummaryAria": "Resumen del turno",
       "tripsCount": "{platform} — {count} viajes",
       "tripsWithWarning": "{count} viajes con aviso",
       "tripsPlain": "{count} viajes",
@@ -938,7 +1010,7 @@
     }
   },
   "apps": {
-    "pageDescription": "Actividad de conductores · Hoy",
+    "pageDescription": "Actividad de hoy por plataforma (viajes cerrados y pendientes).",
     "searchPlaceholder": "Buscar conductor o empresa…",
     "filterProductivity": "Filtrar productividad",
     "allLevels": "Todos los niveles",

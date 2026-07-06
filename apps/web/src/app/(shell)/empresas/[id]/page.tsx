@@ -23,14 +23,14 @@ export default async function EmpresaDetallePage({
     return (
       <ShellPage
         title={t("nav.empresas")}
-        description="Ficha de empresa"
+        description={t("empresasPage.profileDescription")}
         actions={
           <Link href="/empresas" className="erp-btn-outline text-xs">
-            ← Volver al listado
+            {t("common.backToList")}
           </Link>
         }
       >
-        <p className="text-sm text-zinc-600">Empresa no encontrada o sin acceso.</p>
+        <p className="text-sm text-zinc-600">{t("empresasPage.notFound")}</p>
       </ShellPage>
     );
   }
@@ -38,7 +38,7 @@ export default async function EmpresaDetallePage({
   return (
     <ShellPage
       title={company.legalName}
-      description="Ficha completa de empresa"
+      description={t("empresasPage.fullProfileDescription")}
       actions={
         <EmpresaDetalleActions
           companyId={company.id}

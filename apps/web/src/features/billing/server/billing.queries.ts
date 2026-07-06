@@ -33,12 +33,19 @@ function pctOfGross(part: bigint, gross: bigint): string {
   return `${p.toFixed(1).replace(".", ",")} % del total`;
 }
 
+function billingSettlementNetCents(agg: TripMoneyAgg): bigint {
+  if (agg.grossCents >= agg.feeCents) {
+    return agg.grossCents - agg.feeCents;
+  }
+  return agg.netCents;
+}
+
 function aggToCells(agg: TripMoneyAgg): BillingTableRow["cells"] {
   return [
     formatServices(agg.count),
     formatEuroFromCents(agg.grossCents),
     formatEuroSignedFromCents(-agg.feeCents),
-    formatEuroFromCents(agg.netCents),
+    formatEuroFromCents(billingSettlementNetCents(agg)),
     formatEuroFromCents(agg.appCents),
     formatEuroFromCents(agg.cashCents),
     formatEuroFromCents(agg.cardCents),
@@ -91,7 +98,7 @@ function buildPeriodKpis(totalAgg: TripMoneyAgg, driverCount: number): BillingPe
     },
     {
       id: "neto",
-      value: formatEuroFromCents(totalAgg.netCents),
+      value: formatEuroFromCents(billingSettlementNetCents(totalAgg)),
       hintKey: "billing.kpiHint.afterFees",
     },
     {

@@ -17,6 +17,7 @@ import {
   uberDriverDisplayName,
   uberDriverExternalId,
 } from "../lib/uber-fleet-client.js";
+import { syncUberTripsViaReports } from "../lib/uber-reports.js";
 
 const COS_STALE_UUIDS = [
   "94f5ff07-d0bc-4bd6-9b52-4cf18df55b00", // ERIC SALAS RIO
@@ -198,6 +199,39 @@ async function fixCosculluelaStale(dryRun: boolean, allUber: UberDriverHit[]) {
 
     if (match) {
       console.log(`  keep ${dpa.driver.fullName} — UUID matches API (${match.org})`);
+      continue;
+    }
+
+    const from = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const to = new Date();
+    const reportProbe = await syncUberTripsViaReports({
+      tenantId: tenant.id,
+      driverId: ext,
+      driverPlatformAccountId: dpa.id,
+      from,
+      to,
+    });
+    if (reportProbe.ok && reportProbe.data.length > 0) {
+      console.log(
+        `  keep ${dpa.driver.fullName} — ${reportProbe.data.length} trip(s) via Uber reports (not in roster API)`,
+      );
+      if (!dryRun) {
+        await withoutTenant(
+          (tx) =>
+            tx.driverPlatformAccount.update({
+              where: { id: dpa.id },
+              data: {
+                isActive: true,
+                metadata: {
+                  source: "reports_only_uber",
+                  linkedAt: new Date().toISOString(),
+                },
+              },
+            }),
+          undefined,
+          tenant.id,
+        );
+      }
       continue;
     }
 

@@ -4,7 +4,8 @@
   "private": true,
   "type": "module",
   "exports": {
-    "./live": "./src/live/index.ts"
+    "./live": "./src/live/index.ts",
+    "./sync": "./src/sync/index.ts"
   },
   "scripts": {
     "start": "tsx src/main.ts",

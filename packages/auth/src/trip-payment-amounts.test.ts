@@ -279,4 +279,46 @@ describe("trip-payment-amounts", () => {
     assert.equal(cash + card, BigInt(1527));
     assert.ok(cash > BigInt(800));
   });
+
+  it("resolveTripPaymentDisplayAmounts assigns gross when settlement split is zero", () => {
+    const split = resolveTripPaymentDisplayAmounts({
+      grossAmountCents: BigInt(137),
+      netAmountCents: BigInt(0),
+      paymentMethod: "app",
+    });
+    assert.equal(split.app, BigInt(137));
+    assert.equal(split.cash + split.card, BigInt(0));
+  });
+
+  it("resolveTripPaymentDisplayAmounts always sums to gross when buckets exist", () => {
+    const gross = BigInt(339930);
+    const cases = [
+      {
+        grossAmountCents: gross,
+        netAmountCents: BigInt(301447),
+        paymentMethod: "app",
+        appPaymentCents: BigInt(311475),
+        cashPaymentCents: BigInt(28190),
+      },
+      {
+        grossAmountCents: BigInt(1000),
+        netAmountCents: BigInt(1059),
+        paymentMethod: "app",
+        appPaymentCents: BigInt(200),
+      },
+      {
+        grossAmountCents: BigInt(800),
+        netAmountCents: BigInt(704),
+        paymentMethod: "mixed",
+        cashPaymentCents: BigInt(300),
+        cardPaymentCents: BigInt(404),
+      },
+    ] as const;
+
+    for (const trip of cases) {
+      const display = resolveTripPaymentDisplayAmounts(trip);
+      const sum = display.app + display.cash + display.card;
+      assert.equal(sum, trip.grossAmountCents, `expected display sum ${sum} to equal gross ${trip.grossAmountCents}`);
+    }
+  });
 });

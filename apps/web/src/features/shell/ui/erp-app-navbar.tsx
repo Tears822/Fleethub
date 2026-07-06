@@ -55,7 +55,7 @@ export function ErpAppNavbar({
   const profileName = displayName(session, userFallback);
 
   return (
-    <header className="mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-zinc-200 bg-white px-1 py-2.5">
+    <header className="relative z-30 mb-3 flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-zinc-200 bg-white px-1 py-2.5">
       <div className="flex min-w-0 items-center gap-2">
         <button
           type="button"

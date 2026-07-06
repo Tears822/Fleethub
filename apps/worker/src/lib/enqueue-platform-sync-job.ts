@@ -1,7 +1,8 @@
 import { Queue } from "bullmq";
 import type IORedis from "ioredis";
 import type { RidePlatform } from "@fleethub/db";
-import type { PlatformSyncJobData, PlatformSyncTrigger } from "../jobs/process-platform-sync.js";
+import type { PlatformSyncTrigger } from "@fleethub/auth";
+import type { PlatformSyncJobData } from "../jobs/process-platform-sync.js";
 import { FLEET_SYNC_QUEUE_NAME } from "../queues/constants.js";
 
 export async function enqueuePlatformSyncJob(

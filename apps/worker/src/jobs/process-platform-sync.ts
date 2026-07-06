@@ -45,9 +45,9 @@ import {
 } from "../lib/tenant-platform-config.js";
 import { registerSyncRunHeartbeat, clearSyncRunHeartbeat } from "../lib/sync-run-heartbeat.js";
 import { refreshDriverConnectionsForTenant } from "../live/refresh-driver-connections.js";
-import { isSyncRunStale, SYNC_RUN_RUNNING_STALE_MS } from "@fleethub/auth";
+import { isSyncRunStale, SYNC_RUN_RUNNING_STALE_MS, type PlatformSyncTrigger } from "@fleethub/auth";
 
-export type PlatformSyncTrigger = "manual" | "poll";
+import { resolvePlatformSyncDays } from "../lib/platform-sync-window.js";
 
 export type PlatformSyncJobData = {
   tenantId: string;
@@ -56,6 +56,8 @@ export type PlatformSyncJobData = {
   trigger?: PlatformSyncTrigger;
   /** Single-driver recovery sync (e.g. after webhook enrich failure). */
   driverPlatformAccountId?: string;
+  /** Override tenant sync window (days). Used by liquidation / tests. */
+  syncDaysOverride?: number;
 };
 
 function parsePlatform(raw: unknown): RidePlatform {
@@ -90,7 +92,15 @@ export async function processPlatformSyncJob(job: Job<PlatformSyncJobData>): Pro
     throw new Error("platform-sync job missing tenantId");
   }
   const platform = parsePlatform(job.data?.platform);
-  const trigger: PlatformSyncTrigger = job.data?.trigger === "poll" ? "poll" : "manual";
+  const triggerRaw = job.data?.trigger;
+  const trigger: PlatformSyncTrigger =
+    triggerRaw === "poll"
+      ? "poll"
+      : triggerRaw === "liquidation"
+        ? "liquidation"
+        : "manual";
+  const syncDaysOverride =
+    typeof job.data?.syncDaysOverride === "number" ? job.data.syncDaysOverride : undefined;
   const narrowDriverPlatformAccountId =
     typeof job.data?.driverPlatformAccountId === "string"
       ? job.data.driverPlatformAccountId.trim()
@@ -114,6 +124,7 @@ export async function processPlatformSyncJob(job: Job<PlatformSyncJobData>): Pro
     }),
   );
   if (
+    trigger !== "liquidation" &&
     existingRunning &&
     !isSyncRunStale(existingRunning.startedAt, existingRunning.cursorHint, RUNNING_STALE_MS)
   ) {
@@ -348,10 +359,22 @@ export async function processPlatformSyncJob(job: Job<PlatformSyncJobData>): Pro
     }
 
     const to = new Date();
-    const uberDays =
+    const tenantUberDays =
       platform === RidePlatform.UBER ? await resolveTenantUberSyncDays(tenantId) : 7;
-    const freenowDays =
+    const tenantFreenowDays =
       platform === RidePlatform.FREENOW ? await resolveTenantFreenowSyncDays(tenantId) : 7;
+    const uberDays = resolvePlatformSyncDays({
+      platform: RidePlatform.UBER,
+      trigger,
+      tenantDays: tenantUberDays,
+      syncDaysOverride: platform === RidePlatform.UBER ? syncDaysOverride : undefined,
+    });
+    const freenowDays = resolvePlatformSyncDays({
+      platform: RidePlatform.FREENOW,
+      trigger,
+      tenantDays: tenantFreenowDays,
+      syncDaysOverride: platform === RidePlatform.FREENOW ? syncDaysOverride : undefined,
+    });
     const from =
       platform === RidePlatform.UBER
         ? uberSyncRange(to, uberDays).from
@@ -365,7 +388,15 @@ export async function processPlatformSyncJob(job: Job<PlatformSyncJobData>): Pro
     let freenowCompanyByFleetId = new Map<string, string>();
 
     if (platform === RidePlatform.UBER) {
-      await prefetchUberOrgReports(tenantId, from, to);
+      await prefetchUberOrgReports(tenantId, from, to, {
+        pollMode: trigger === "poll" && !narrowDriverPlatformAccountId,
+        narrowDpas: narrowDriverPlatformAccountId ? syncDpas : undefined,
+      });
+      if (trigger === "poll" && uberDays < tenantUberDays) {
+        console.log(
+          `[worker] platform-sync ${tenantId} UBER poll: incremental window ${uberDays}d (tenant ${tenantUberDays}d)`,
+        );
+      }
     }
 
     if (platform === RidePlatform.FREENOW) {

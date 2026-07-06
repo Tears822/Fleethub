@@ -14,6 +14,17 @@ import {
   type SyncPlatform,
 } from "./sync-stale";
 import type { AlertDigestLine } from "./notify-tenant-alerts";
+import { tripNeedsPaymentUiAttention } from "./trip-payment-amounts";
+
+const PAYMENT_ATTENTION_SELECT = {
+  netAmountCents: true,
+  grossAmountCents: true,
+  paymentMethod: true,
+  cashPaymentCents: true,
+  cardPaymentCents: true,
+  appPaymentCents: true,
+  paymentValidated: true,
+} as const;
 
 const SYNC_PLATFORMS: SyncPlatform[] = [RidePlatform.UBER, RidePlatform.FREENOW];
 
@@ -84,21 +95,22 @@ export type BuildOperationalAlertsOptions = {
   tripDriverWhere?: Prisma.DriverWhereInput;
 };
 
-/** Pending shift trips with payment type not confirmed (`paymentValidated = false`). Same rule as Cerrar turnos AVISOS. */
+/** Pending shift trips needing payment review (unconfirmed or unbalanced app). Same rule as Cerrar turnos AVISOS. */
 export async function countPendingPaymentAlerts(
   tenantId: string,
   tripDriverWhere?: Prisma.DriverWhereInput,
 ): Promise<number> {
-  return withTenant(tenantId, (tx) =>
-    tx.trip.count({
+  const trips = await withTenant(tenantId, (tx) =>
+    tx.trip.findMany({
       where: {
         tenantId,
         liquidationStatus: "pending",
-        paymentValidated: false,
         ...(tripDriverWhere ? { driver: tripDriverWhere } : {}),
       },
+      select: PAYMENT_ATTENTION_SELECT,
     }),
   );
+  return trips.filter((t) => tripNeedsPaymentUiAttention(t)).length;
 }
 
 /** Tenant operational alerts (same ids as dashboard; for email digest and UI). */
@@ -153,7 +165,7 @@ export async function buildOperationalAlertsForTenant(
     alerts.push({
       id: "payment-unvalidated",
       title: "Pagos sin confirmar",
-      description: `${unvalidatedPayments} viaje${unvalidatedPayments === 1 ? "" : "s"} con forma de pago pendiente en Cerrar turnos.`,
+      description: `${unvalidatedPayments} viaje${unvalidatedPayments === 1 ? "" : "s"} con forma de pago pendiente o descuadrado en Cerrar turnos.`,
     });
   }
 

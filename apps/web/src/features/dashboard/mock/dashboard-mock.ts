@@ -1,8 +1,19 @@
 import type { LucideIcon } from "lucide-react";
 
+export type DashboardKpiId =
+  | "activeDriversToday"
+  | "openShiftsNow"
+  | "connectedNow"
+  | "dayBilling"
+  | "tripsToday"
+  | "pendingShifts"
+  | "alerts";
+
 export type MockDashboardKpi = {
-  title: string;
+  id: DashboardKpiId;
   value: string;
+  /** Interpolation params for localized hints (resolved in dashboard page). */
+  hintParams?: { totalDrivers?: number };
   hint?: string;
   trend?: { text: string; positive?: boolean; tone?: "warning" | "danger" };
   icon: LucideIcon;

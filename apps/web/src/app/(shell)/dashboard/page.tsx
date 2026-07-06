@@ -21,9 +21,11 @@ import { DashboardRefreshButton } from "@/features/dashboard/ui/dashboard-refres
 import { DashboardRevenueMockChart } from "@/features/dashboard/ui/dashboard-revenue-mock-chart";
 import {
   parseTopDriversPeriod,
-  topDriversEmptyMessage,
-  topDriversPeriodSubtitle,
+  topDriversEmptyMessageKey,
+  topDriversPeriodSubtitleKey,
 } from "@/features/dashboard/lib/top-drivers-period";
+import { localizeDashboardKpis } from "@/features/dashboard/lib/dashboard-kpi-i18n";
+import { localizeDashboardAlerts } from "@/features/dashboard/lib/dashboard-alerts-i18n";
 import { DashboardTopDriversCard } from "@/features/dashboard/ui/dashboard-top-drivers-card";
 import { getTenantProductivitySettings } from "@/features/settings/server/settings.queries";
 import { ShellPage } from "@/features/shell/ui/shell-page";
@@ -58,6 +60,7 @@ export default async function DashboardPage({
 
   let operativa = buildEmptyDashboardOperativaSnapshot(drivers ?? 0);
   let alerts: Awaited<ReturnType<typeof loadDashboardAlerts>> = [];
+  let connectedNow: Awaited<ReturnType<typeof countDriversConnectedNow>> | null = null;
   if (!dbUnavailable) {
     try {
       const thresholds = await getTenantProductivitySettings(session.tid);
@@ -68,6 +71,7 @@ export default async function DashboardPage({
         loadDashboardAlerts(session.tid, scope, thresholds),
         countDriversConnectedNow(session.tid, scope),
       ]);
+      connectedNow = connected;
       operativa = {
         ...op,
         kpis: applyPaymentAlertCountToKpis(
@@ -81,6 +85,12 @@ export default async function DashboardPage({
     }
   }
 
+  const localizedKpis = localizeDashboardKpis(operativa.kpis, t, {
+    paymentAlertCount: operativa.paymentAlertCount,
+    connected: connectedNow ?? undefined,
+  });
+  const localizedAlerts = localizeDashboardAlerts(alerts, t);
+
   const canManualRefresh = canManageShifts(session.role);
 
   return (
@@ -90,7 +100,7 @@ export default async function DashboardPage({
       toolbarTrailing={<DashboardRefreshButton enabled={canManualRefresh} />}
     >
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7">
-        {operativa.kpis.map((k) => (
+        {localizedKpis.map((k) => (
           <VuiStatCard
             key={k.title}
             title={k.title}
@@ -108,8 +118,11 @@ export default async function DashboardPage({
           <>{t("dashboard.dbUnavailable")}</>
         ) : (
           <>
-            Base de datos: {drivers} conductores · {companies} empresas
-            {users !== null ? <> · {users} usuarios</> : null}.
+            {t("dashboard.dbSummary", {
+              drivers: String(drivers ?? 0),
+              companies: String(companies ?? 0),
+              users: String(users ?? 0),
+            })}
             {scope.mode === "restricted" ? (
               <> · {t("dashboard.limitedScope")}</>
             ) : null}
@@ -118,7 +131,7 @@ export default async function DashboardPage({
       </p>
 
       <DashboardAlertsPanel
-        alerts={alerts}
+        alerts={localizedAlerts}
         headerAction={
           <DashboardAlertsEmailButton
             alerts={alerts}
@@ -137,8 +150,8 @@ export default async function DashboardPage({
         />
         <DashboardTopDriversCard
           period={operativa.topDriversPeriod}
-          subtitle={topDriversPeriodSubtitle(operativa.topDriversPeriod)}
-          emptyMessage={topDriversEmptyMessage(operativa.topDriversPeriod)}
+          subtitleKey={topDriversPeriodSubtitleKey(operativa.topDriversPeriod)}
+          emptyMessageKey={topDriversEmptyMessageKey(operativa.topDriversPeriod)}
           drivers={operativa.topDrivers}
         />
       </div>

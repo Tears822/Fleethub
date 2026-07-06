@@ -2,7 +2,7 @@ import { isT3Fare, resolveTripFeeCents } from "@fleethub/auth/shift-liquidation"
 import {
   resolveTripPaymentDisplayAmounts,
   tripGrossCents,
-  tripNeedsManualPaymentReview,
+  tripNeedsPaymentUiAttention,
 } from "@fleethub/auth";
 import { RidePlatform } from "@fleethub/db";
 
@@ -106,7 +106,7 @@ function addTripToAgg(
   if (isT3Fare(trip.fareType)) {
     agg.t3Cents += gross;
   }
-  if (tripNeedsManualPaymentReview(trip)) {
+  if (tripNeedsPaymentUiAttention(trip)) {
     agg.paymentAlertCount += 1;
   }
 
