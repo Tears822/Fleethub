@@ -54,7 +54,7 @@ describe("freenowBookingToUpsert", () => {
     assert.equal(trip.appPaymentCents, 1180n);
   });
 
-  it("derives platform fee from taxPercentage", () => {
+  it("does not derive platform fee from taxPercentage (VAT, not commission)", () => {
     const trip = freenowBookingToUpsert({
       id: "b-5",
       state: "ACCOMPLISHED",
@@ -64,9 +64,9 @@ describe("freenowBookingToUpsert", () => {
       tourValue: { amount: 12.05, tip: 0, toll: 0, taxPercentage: 15 },
     });
     assert.ok(trip);
-    assert.equal(trip.platformFeeCents, 181n);
-    assert.equal(trip.netAmountCents, 1024n);
-    assert.equal(trip.cashPaymentCents, 1024n);
+    assert.equal(trip.platformFeeCents, null);
+    assert.equal(trip.netAmountCents, 1205n);
+    assert.equal(trip.cashPaymentCents, 1205n);
   });
 
   it("ignores non-accomplished bookings", () => {

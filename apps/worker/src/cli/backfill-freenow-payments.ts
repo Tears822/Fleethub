@@ -5,10 +5,9 @@
  *   npm run backfill:freenow-payments -w @fleethub/worker -- demo-a
  *   npm run backfill:freenow-payments -w @fleethub/worker -- demo-a --dry-run
  */
-import path from "node:path";
-import { config } from "dotenv";
+import "../load-env.js";
 import type { NormalizedTripUpsert } from "@fleethub/contracts";
-import { prisma, RidePlatform, withTenant } from "@fleethub/db";
+import { prisma, RidePlatform, withTenant, withoutTenant } from "@fleethub/db";
 import {
   freenowBookingToUpsert,
   freenowPaymentSplitCents,
@@ -20,9 +19,6 @@ import {
   resolveTenantFreenowSyncDays,
 } from "../lib/tenant-platform-config.js";
 import { freenowSyncRange } from "../lib/freenow-sync-window.js";
-
-config({ path: path.resolve(process.cwd(), "../../.env") });
-config({ path: path.resolve(process.cwd(), ".env"), override: true });
 
 function isSeedTripId(externalTripId: string): boolean {
   return externalTripId.startsWith("seed-");
@@ -131,10 +127,12 @@ async function main() {
     process.exit(1);
   }
 
-  const tenant = await prisma.tenant.findUnique({
-    where: { slug },
-    select: { id: true, name: true },
-  });
+  const tenant = await withoutTenant((tx) =>
+    tx.tenant.findUnique({
+      where: { slug },
+      select: { id: true, name: true },
+    }),
+  );
   if (!tenant) {
     console.error("Tenant not found:", slug);
     process.exit(1);
@@ -269,7 +267,7 @@ function buildPatch(
 
   if (!seed && api) {
     const earningsPatch: Record<string, unknown> = {};
-    if (api.platformFeeCents != null && (trip.platformFeeCents == null || trip.platformFeeCents <= 0n)) {
+    if (api.platformFeeCents != null && api.platformFeeCents !== (trip.platformFeeCents ?? 0n)) {
       earningsPatch.platformFeeCents = api.platformFeeCents;
     }
     if (

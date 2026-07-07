@@ -72,8 +72,14 @@ function freenowAutoImportEnabled(): boolean {
   return v === "1" || v === "true" || v === "yes";
 }
 
+/** Import new ACTIVE drivers when mapped to a fleet empresa, or when globally enabled. */
+function shouldImportFreenowDrivers(options?: { fleetCompanyId?: string }): boolean {
+  if (freenowAutoImportEnabled()) return true;
+  return Boolean(options?.fleetCompanyId);
+}
+
 /**
- * FreeNow driver sync — bulk import opt-in only (shared umbrella must not clone drivers).
+ * FreeNow driver sync for one public company id — import new ACTIVE drivers (when allowed), then link by name.
  */
 export async function syncFreenowDriversForTenant(
   tenantId: string,
@@ -81,15 +87,20 @@ export async function syncFreenowDriversForTenant(
   options?: { fleetCompanyId?: string },
 ): Promise<PlatformDriverSyncResult> {
   let created = 0;
-  if (freenowAutoImportEnabled()) {
+  if (shouldImportFreenowDrivers(options)) {
     const imported = await importFreenowDriversForTenant(tenantId, publicCompanyId, options);
     if (!imported.ok) {
       return { ok: false, message: imported.message };
     }
     created = imported.created;
+    if (imported.created > 0) {
+      console.log(
+        `[freenow] auto-import ${publicCompanyId}: +${imported.created} driver(s), ${imported.linked}/${imported.total} linked.`,
+      );
+    }
   }
 
-  const linked = await linkFreenowDriversForTenant(tenantId, publicCompanyId);
+  const linked = await linkFreenowDriversForTenant(tenantId, publicCompanyId, options);
   if (linked.message) {
     return { ok: false, message: linked.message };
   }
@@ -103,8 +114,8 @@ export async function syncFreenowDriversForTenant(
 }
 
 /**
- * Link FleetHub drivers to FreeNow for every company on the fleet umbrella token.
- * Upgrades spreadsheet short codes (e.g. 1137JP) to public API ids when names match.
+ * Sync FreeNow drivers for every company on the fleet umbrella token.
+ * Auto-imports new ACTIVE drivers into the mapped FleetHub empresa, then links/updates ids.
  */
 export async function syncFreenowDriversForAllLinkedCompanies(
   tenantId: string,
@@ -112,14 +123,7 @@ export async function syncFreenowDriversForAllLinkedCompanies(
   const linked = await listAllFreenowLinkedCompanies();
   if (!linked.ok) {
     const publicCompanyId = await resolveTenantFreenowPublicCompanyId(tenantId);
-    const result = await linkFreenowDriversForTenant(tenantId, publicCompanyId);
-    if (result.message) return { ok: false, message: result.message };
-    return {
-      ok: true,
-      created: 0,
-      linked: result.linked,
-      platformDrivers: result.freenowDrivers,
-    };
+    return syncFreenowDriversForTenant(tenantId, publicCompanyId);
   }
 
   const fleetCompanies = await withTenant(tenantId, (tx) =>
@@ -134,6 +138,7 @@ export async function syncFreenowDriversForAllLinkedCompanies(
     ? new Set(await resolveTenantFreenowPublicCompanyIds(tenantId))
     : null;
 
+  let createdCount = 0;
   let linkedCount = 0;
   let platformDrivers = 0;
 
@@ -144,42 +149,49 @@ export async function syncFreenowDriversForAllLinkedCompanies(
     const fnName = freenowLinkedCompanyName(fnCompany);
     const fleet = findFleetCompanyForFreenowName(fleetCompanies, fnName);
 
-    const result = await linkFreenowDriversForTenant(tenantId, publicCompanyId, {
+    const result = await syncFreenowDriversForTenant(tenantId, publicCompanyId, {
       fleetCompanyId: fleet?.id,
     });
-    if (result.message) return { ok: false, message: result.message };
+    if (!result.ok) return result;
+    createdCount += result.created;
     linkedCount += result.linked;
-    platformDrivers += result.freenowDrivers;
-    console.log(
-      `[freenow] link ${publicCompanyId} (${fnName})${fleet ? ` ↔ ${fleet.legalName}` : ""}: +${result.linked} driver(s).`,
-    );
+    platformDrivers += result.platformDrivers;
+    if (result.created > 0 || result.linked > 0) {
+      console.log(
+        `[freenow] sync ${publicCompanyId} (${fnName})${fleet ? ` ↔ ${fleet.legalName}` : ""}: +${result.created} created, +${result.linked} linked.`,
+      );
+    }
   }
 
-  // Tenant-wide pass on primary id — upgrades drivers whose empresa name did not match FN company label.
+  // Tenant-wide pass on primary id — link only (no bulk import without empresa mapping).
   const mappings = await resolveFreenowFleetCompanyMappings(tenantId);
   const primaryId = await resolveTenantFreenowPublicCompanyId(tenantId);
   if (primaryId) {
-    const fallback = await linkFreenowDriversForTenant(tenantId, primaryId);
-    if (fallback.message) return { ok: false, message: fallback.message };
+    const fallback = await syncFreenowDriversForTenant(tenantId, primaryId);
+    if (!fallback.ok) return fallback;
+    createdCount += fallback.created;
     linkedCount += fallback.linked;
-    platformDrivers = Math.max(platformDrivers, fallback.freenowDrivers);
-    if (fallback.linked > 0) {
-      console.log(`[freenow] umbrella link ${primaryId}: +${fallback.linked} driver(s).`);
+    platformDrivers = Math.max(platformDrivers, fallback.platformDrivers);
+    if (fallback.created > 0 || fallback.linked > 0) {
+      console.log(
+        `[freenow] umbrella sync ${primaryId}: +${fallback.created} created, +${fallback.linked} linked.`,
+      );
     }
   }
 
-  if (mappings.length > 0 && linkedCount === 0) {
+  if (mappings.length > 0 && linkedCount === 0 && createdCount === 0) {
     for (const mapping of mappings) {
-      const result = await linkFreenowDriversForTenant(tenantId, mapping.publicCompanyId, {
+      const result = await syncFreenowDriversForTenant(tenantId, mapping.publicCompanyId, {
         fleetCompanyId: mapping.fleetCompanyId,
       });
-      if (result.message) return { ok: false, message: result.message };
+      if (!result.ok) return result;
+      createdCount += result.created;
       linkedCount += result.linked;
-      platformDrivers += result.freenowDrivers;
+      platformDrivers += result.platformDrivers;
     }
   }
 
-  if (linkedCount > 0 || linked.companies.length > 0) {
+  if (linkedCount > 0 || createdCount > 0 || linked.companies.length > 0) {
     for (const fnCompany of linked.companies) {
       const publicCompanyId = fnCompany.id?.trim();
       if (!publicCompanyId) continue;
@@ -197,5 +209,5 @@ export async function syncFreenowDriversForAllLinkedCompanies(
     }
   }
 
-  return { ok: true, created: 0, linked: linkedCount, platformDrivers };
+  return { ok: true, created: createdCount, linked: linkedCount, platformDrivers };
 }

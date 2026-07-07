@@ -1,5 +1,6 @@
 import { listSectorBenchmarkOptInTenantIds } from "./tenant-analytics-settings";
-import { prisma } from "@fleethub/db";
+import { withoutTenant } from "@fleethub/db";
+import { tenantDayEndFromCalendarDate, tenantDayStartFromCalendarDate } from "./display-timezone";
 import { RidePlatform } from "@prisma/client";
 import type { SectorDriverAverages, SectorPlatformFilter } from "./analytics-sector-types";
 
@@ -105,28 +106,30 @@ export async function getSectorDriverAveragesForPlatform(
   const allowedTenantIds = optedInIds.filter((id) => id !== excludeTenantId);
   if (allowedTenantIds.length === 0) return null;
 
-  const rangeEnd = new Date(dateTo);
-  rangeEnd.setHours(23, 59, 59, 999);
+  const rangeStart = tenantDayStartFromCalendarDate(dateFrom);
+  const rangeEnd = tenantDayEndFromCalendarDate(dateTo);
 
-  const trips = await prisma.trip.findMany({
-    where: {
-      liquidationStatus: "closed",
-      startedAt: { gte: dateFrom, lte: rangeEnd },
-      tenantId: { in: allowedTenantIds },
-    },
-    select: {
-      tenantId: true,
-      platform: true,
-      startedAt: true,
-      endedAt: true,
-      grossAmountCents: true,
-      platformFeeCents: true,
-      netAmountCents: true,
-      tipCents: true,
-      platformBonusCents: true,
-      driverId: true,
-    },
-  });
+  const trips = await withoutTenant((tx) =>
+    tx.trip.findMany({
+      where: {
+        liquidationStatus: "closed",
+        startedAt: { gte: rangeStart, lte: rangeEnd },
+        tenantId: { in: allowedTenantIds },
+      },
+      select: {
+        tenantId: true,
+        platform: true,
+        startedAt: true,
+        endedAt: true,
+        grossAmountCents: true,
+        platformFeeCents: true,
+        netAmountCents: true,
+        tipCents: true,
+        platformBonusCents: true,
+        driverId: true,
+      },
+    }),
+  );
 
   const scoped = filterTripsByPlatform(trips, platform);
   const byDriver = new Map<string, TripAgg>();

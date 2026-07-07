@@ -103,14 +103,18 @@ export function addTripToAgg(
   const toll = trip.tollCents ?? BigInt(0);
 
   agg.count += 1;
-  agg.grossCents += gross;
+  const billingGross =
+    trip.platform === "FREENOW"
+      ? gross + tip
+      : gross;
+  agg.grossCents += billingGross;
   agg.feeCents += fee;
   agg.netCents += net;
   agg.tipCents += tip;
   agg.bonusCents += bonus;
   agg.tollCents += toll;
   if (isT3Fare(trip.fareType ?? null)) {
-    agg.t3Cents += gross;
+    agg.t3Cents += trip.platform === "FREENOW" ? billingGross : gross;
   }
   agg.taximetroCents += tripTaximetroCents({
     fareType: trip.fareType ?? null,

@@ -1011,6 +1011,7 @@
   },
   "apps": {
     "pageDescription": "Activitat d'avui per plataforma (viatges tancats i arracades).",
+    "noLiveToday": "No hi ha viatges registrats avui. Després del seed en demo-a haurien d'aparèixer conductors amb activitat del dia actual.",
     "searchPlaceholder": "Cercar conductor o empresa…",
     "filterProductivity": "Filtrar productivitat",
     "allLevels": "Tots els nivells",

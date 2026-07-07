@@ -95,6 +95,13 @@ export {
 } from "./company-economic-defaults";
 export { formatFareTypeLabel, isT3Fare, isTipOnlyFare, tripTaximetroCents } from "./shift-liquidation";
 export {
+  freenowEstimateTripCommissionCents,
+  freenowTripBillingBaseCents,
+  freenowTripCommissionBaseCents,
+  freenowTripCommissionEstimateWeight,
+  freenowTripNetAfterFeeCents,
+} from "./freenow-commission";
+export {
   addNetToPaymentBucket,
   addTripToPaymentBuckets,
   classifyPaymentMethod,

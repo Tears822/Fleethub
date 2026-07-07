@@ -194,13 +194,10 @@ export function AppsUsageMockView({
     <div className="space-y-4">
       {!isLive ? (
         <p className="rounded-lg border border-zinc-200 bg-zinc-50 px-4 py-3 text-sm text-zinc-600">
-          No hay viajes registrados hoy. Tras el seed en demo-a deberían aparecer conductores con
-          actividad del día actual.
+          {t("apps.noLiveToday")}
         </p>
       ) : (
-        <p className="text-xs text-zinc-500">
-          Actividad de hoy por plataforma (viajes cerrados y pendientes).
-        </p>
+        <p className="text-xs text-zinc-500">{t("apps.pageDescription")}</p>
       )}
 
       <VuiPanel className="space-y-4 p-4 md:p-5">

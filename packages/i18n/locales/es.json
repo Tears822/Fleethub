@@ -1011,6 +1011,7 @@
   },
   "apps": {
     "pageDescription": "Actividad de hoy por plataforma (viajes cerrados y pendientes).",
+    "noLiveToday": "No hay viajes registrados hoy. Tras el seed en demo-a deberían aparecer conductores con actividad del día actual.",
     "searchPlaceholder": "Buscar conductor o empresa…",
     "filterProductivity": "Filtrar productividad",
     "allLevels": "Todos los niveles",

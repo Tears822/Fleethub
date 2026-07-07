@@ -37,22 +37,22 @@ const ToastContext = createContext<ToastContextValue | null>(null);
 
 const variantStyles: Record<
   ToastVariant,
-  { ring: string; icon: typeof CheckCircle2; iconClass: string }
+  { accent: string; icon: typeof CheckCircle2; iconClass: string }
 > = {
   success: {
-    ring: "ring-emerald-400/25",
+    accent: "border-l-emerald-500",
     icon: CheckCircle2,
-    iconClass: "text-emerald-400",
+    iconClass: "text-emerald-600",
   },
   error: {
-    ring: "ring-red-400/25",
+    accent: "border-l-red-500",
     icon: AlertCircle,
-    iconClass: "text-red-400",
+    iconClass: "text-red-600",
   },
   info: {
-    ring: "ring-sky-400/25",
+    accent: "border-l-sky-500",
     icon: Info,
-    iconClass: "text-sky-400",
+    iconClass: "text-sky-600",
   },
 };
 
@@ -73,15 +73,15 @@ function ToastViewport({ items, onDismiss }: { items: ToastItem[]; onDismiss: (i
         return (
           <div
             key={item.id}
-            className={`pointer-events-auto flex items-start gap-3 rounded-vision-xl border border-white/[0.1] bg-vision-card-dark/95 p-4 shadow-vision-xxl ring-1 backdrop-blur-xl transition duration-300 ${style.ring}`}
+            className={`pointer-events-auto flex items-start gap-3 rounded-xl border border-zinc-200 border-l-4 bg-white p-4 shadow-lg transition duration-300 ${style.accent}`}
             role="status"
           >
             <Icon className={`mt-0.5 h-5 w-5 shrink-0 ${style.iconClass}`} aria-hidden />
-            <p className="flex-1 text-sm font-medium leading-snug text-white">{item.message}</p>
+            <p className="flex-1 text-sm font-medium leading-snug text-zinc-800">{item.message}</p>
             <button
               type="button"
               onClick={() => onDismiss(item.id)}
-              className="shrink-0 rounded-lg p-1 text-vision-muted transition hover:bg-white/10 hover:text-white"
+              className="shrink-0 rounded-lg p-1 text-zinc-400 transition hover:bg-zinc-100 hover:text-zinc-700"
               aria-label="Cerrar notificación"
             >
               <X className="h-4 w-4" aria-hidden />

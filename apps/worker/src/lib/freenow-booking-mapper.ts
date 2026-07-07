@@ -15,17 +15,17 @@ function mapPaymentMethod(raw: string | undefined): string | null {
   return raw.toLowerCase();
 }
 
-/** FreeNow booking `tourValue.taxPercentage` → platform commission in cents. */
+/**
+ * Legacy helper — `tourValue.taxPercentage` is VAT (e.g. 10%), not platform commission (~15%).
+ * Per-trip commission comes from the driver earnings API during sync enrichment.
+ */
 export function freenowPlatformFeeFromTourValue(
   grossAmountCents: bigint,
   taxPercentage: number | undefined,
 ): bigint | null {
-  if (grossAmountCents <= 0n) return null;
-  if (taxPercentage == null || !Number.isFinite(taxPercentage) || taxPercentage <= 0) {
-    return null;
-  }
-  const pct = Math.round(taxPercentage);
-  return BigInt(Math.round((Number(grossAmountCents) * pct) / 100));
+  void grossAmountCents;
+  void taxPercentage;
+  return null;
 }
 
 function netAfterFeeAndTip(gross: bigint, fee: bigint | null, tip: bigint): bigint | null {
@@ -71,7 +71,7 @@ export function freenowBookingToUpsert(booking: FreenowBooking): NormalizedTripU
   const tip = eurosToCents(tv?.tip) ?? 0n;
   const toll = eurosToCents(tv?.toll) ?? 0n;
   const grossAmountCents = gross ?? 0n;
-  const platformFeeCents = freenowPlatformFeeFromTourValue(grossAmountCents, tv?.taxPercentage);
+  const platformFeeCents = null;
   const netAmountCents = netAfterFeeAndTip(grossAmountCents, platformFeeCents, tip);
 
   const rawPayment = booking.paymentMethod?.trim().toUpperCase();
